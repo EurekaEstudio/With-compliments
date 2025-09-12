@@ -19,7 +19,8 @@ const Dashboard: React.FC = () => {
         const { data, error } = await supabase
           .from(currentConfig.tableName)
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .range(0, 49999); // Aumentamos el límite para obtener todos los registros
 
         if (error) throw error;
         

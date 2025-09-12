@@ -185,7 +185,7 @@ const AnalyticsPage: React.FC = () => {
                     <DatePresetPicker onSelect={handlePresetSelect} selected={activePreset} />
                 </div>
             </div>
-             <button type="submit" className="mt-4 px-4 py-2 w-full sm:w-auto bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-800 h-10">Aplicar Filtros</button>
+             
         </form>
       </div>
 

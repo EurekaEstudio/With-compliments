@@ -78,7 +78,7 @@ const hasRxRequest = (msgs: Message[]): boolean => {
 
 const n8nHistorialConfig: TableConfig = {
     id: 'n8n_historial',
-    name: 'Historial de Interacción Chatbot Clínica Dental Yany',
+    name: 'Agente Clínica Yany',
     tableName: 'n8n_historial',
     columns: [
         { id: 'message', header: 'Mensaje', accessor: row => row.message, render: value => <MessageRenderer messageField={value} />, isPrimary: true },
@@ -87,19 +87,10 @@ const n8nHistorialConfig: TableConfig = {
         { id: 'rx_request', header: 'Solicitud RX', accessor: row => row._sessionMessages, render: (value) => hasRxRequest(value) ? <CheckCircleIcon className="w-6 h-6 text-green-500 mx-auto" /> : <XCircleIcon className="w-6 h-6 text-red-500 mx-auto" />, className: 'text-center' }
     ],
     filters: [
-        { id: 'q', label: 'Buscar en mensajes...', type: 'text' },
-        { id: 'session_id', label: 'Filtrar por ID de Sesión...', type: 'text' },
+        
+        
         { id: 'from', label: 'Desde', type: 'date' },
-        { id: 'to', label: 'Hasta', type: 'date' },
-        { 
-          id: 'special_request', 
-          label: 'Solicitud RX', 
-          type: 'select', 
-          options: [{value: 'requested', label: 'Solicitadas'}, {value: 'not_requested', label: 'No Solicitadas'}],
-          db_column: 'message->>text',
-          db_column_type: 'text_match',
-          db_match_string: 'radiograf'
-        }
+        { id: 'to', label: 'Hasta', type: 'date' }
     ],
     stats: [
         { id: 'totalMessages', title: 'Mensajes Totales', icon: <ChatBubbleIcon className="w-8 h-8"/>, getValue: (data) => data.length },

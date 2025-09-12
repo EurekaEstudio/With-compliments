@@ -39,76 +39,36 @@ const HistoryPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-        // Step 1: Base query for sessions matching text and date filters
         let baseQuery = supabase.from(currentConfig.tableName).select('session_id, created_at');
 
-        currentConfig.filters.forEach(filterConfig => {
-            const value = currentFilters[filterConfig.id];
-            if (value && value !== 'all' && (filterConfig.type === 'text' || filterConfig.type === 'date')) {
-                if (filterConfig.type === 'text') {
-                    const column = filterConfig.id === 'q' ? 'message->>text' : filterConfig.id;
-                    baseQuery = baseQuery.ilike(column, `%${value}%`);
-                } else if (filterConfig.type === 'date') {
-                    if (filterConfig.id.includes('from')) {
-                        baseQuery = baseQuery.gte('created_at', new Date(value).toISOString());
-                    } else if (filterConfig.id.includes('to')) {
-                        const toDate = new Date(value);
-                        toDate.setHours(23, 59, 59, 999);
-                        baseQuery = baseQuery.lte('created_at', toDate.toISOString());
-                    }
-                }
-            }
-        });
+        if (currentFilters.from) {
+            baseQuery = baseQuery.gte('created_at', new Date(currentFilters.from).toISOString());
+        }
+        if (currentFilters.to) {
+            const toDate = new Date(currentFilters.to);
+            toDate.setHours(23, 59, 59, 999);
+            baseQuery = baseQuery.lte('created_at', toDate.toISOString());
+        }
 
-        const { data: baseData, error: baseError } = await baseQuery;
-        if (baseError) throw baseError;
+        const { data: filteredData, error: filterError } = await baseQuery;
+        if (filterError) throw filterError;
 
         const sessionLastDates: Record<string, string> = {};
-        (baseData || []).forEach(msg => {
+        (filteredData || []).forEach(msg => {
             if (!sessionLastDates[msg.session_id] || new Date(msg.created_at) > new Date(sessionLastDates[msg.session_id])) {
                 sessionLastDates[msg.session_id] = msg.created_at;
             }
         });
-        let candidateSessionIds = Object.keys(sessionLastDates);
-
-        // Step 2: Apply special select filter if present by filtering candidates
-        const specialFilter = currentConfig.filters.find(f => f.type === 'select');
-        const specialFilterValue = specialFilter ? currentFilters[specialFilter.id] : 'all';
-
-        let finalSessionIds = candidateSessionIds;
-
-        if (specialFilter && specialFilterValue && specialFilterValue !== 'all') {
-            let positiveIdQuery = supabase.from(currentConfig.tableName).select('session_id');
-            
-            if (specialFilter.db_column_type === 'boolean' && specialFilter.db_column) {
-                positiveIdQuery = positiveIdQuery.eq(specialFilter.db_column, true);
-            } else if (specialFilter.db_column_type === 'text_match' && specialFilter.db_column && specialFilter.db_match_string) {
-                positiveIdQuery = positiveIdQuery.ilike(specialFilter.db_column, `%${specialFilter.db_match_string}%`);
-            }
-
-            const { data: positiveData, error: positiveError } = await positiveIdQuery;
-            if (positiveError) throw positiveError;
-            
-            const positiveIds = [...new Set((positiveData || []).map((p: any) => p.session_id))];
-
-            if (specialFilterValue === 'requested') {
-                finalSessionIds = candidateSessionIds.filter(id => positiveIds.includes(id));
-            } else { // 'not_requested'
-                finalSessionIds = candidateSessionIds.filter(id => !positiveIds.includes(id));
-            }
-        }
         
-        // Step 3: Sort the final list of session IDs
-        const sortedSessionIds = finalSessionIds.sort((a,b) => 
+        const finalSessionIds = Object.keys(sessionLastDates).sort((a,b) => 
             new Date(sessionLastDates[b]).getTime() - new Date(sessionLastDates[a]).getTime()
         );
         
-        setTotalCount(sortedSessionIds.length);
+        setTotalCount(finalSessionIds.length);
         
-        // Step 4: Paginate
         const from = (page - 1) * PAGE_SIZE;
         const to = from + PAGE_SIZE;
-        const paginatedSessionIds = sortedSessionIds.slice(from, to);
+        const paginatedSessionIds = finalSessionIds.slice(from, to);
 
         if (paginatedSessionIds.length === 0) {
             setGroupedMessages({});
@@ -117,7 +77,6 @@ const HistoryPage: React.FC = () => {
             return;
         }
 
-        // Step 5: Fetch all data for the paginated sessions
         const { data: finalData, error: finalError } = await supabase
             .from(currentConfig.tableName)
             .select('*')
@@ -181,82 +140,7 @@ const HistoryPage: React.FC = () => {
       fetchMessages(1, filters);
   };
 
-  const handleExportCSV = async () => {
-    if (!currentConfig) return;
-    setIsExporting(true);
-    try {
-        let baseQuery = supabase.from(currentConfig.tableName).select('session_id, created_at');
-        currentConfig.filters.forEach(filterConfig => {
-            const value = filters[filterConfig.id];
-            if (value && value !== 'all' && (filterConfig.type === 'text' || filterConfig.type === 'date')) {
-                if (filterConfig.type === 'text') {
-                    const column = filterConfig.id === 'q' ? 'message->>text' : filterConfig.id;
-                    baseQuery = baseQuery.ilike(column, `%${value}%`);
-                } else if (filterConfig.type === 'date') {
-                    if (filterConfig.id.includes('from')) {
-                        baseQuery = baseQuery.gte('created_at', new Date(value).toISOString());
-                    } else if (filterConfig.id.includes('to')) {
-                        const toDate = new Date(value);
-                        toDate.setHours(23, 59, 59, 999);
-                        baseQuery = baseQuery.lte('created_at', toDate.toISOString());
-                    }
-                }
-            }
-        });
-        const { data: baseData, error: baseError } = await baseQuery;
-        if (baseError) throw baseError;
-        let candidateSessionIds = [...new Set((baseData || []).map(msg => msg.session_id))];
-
-        const specialFilter = currentConfig.filters.find(f => f.type === 'select');
-        const specialFilterValue = specialFilter ? filters[specialFilter.id] : 'all';
-        let finalSessionIds = candidateSessionIds;
-        if (specialFilter && specialFilterValue && specialFilterValue !== 'all') {
-            let positiveIdQuery = supabase.from(currentConfig.tableName).select('session_id');
-            if (specialFilter.db_column_type === 'boolean' && specialFilter.db_column) positiveIdQuery = positiveIdQuery.eq(specialFilter.db_column, true);
-            else if (specialFilter.db_column_type === 'text_match' && specialFilter.db_column && specialFilter.db_match_string) positiveIdQuery = positiveIdQuery.ilike(specialFilter.db_column, `%${specialFilter.db_match_string}%`);
-            const { data: positiveData, error: positiveError } = await positiveIdQuery;
-            if (positiveError) throw positiveError;
-            const positiveIds = [...new Set((positiveData || []).map((p: any) => p.session_id))];
-            if (specialFilterValue === 'requested') finalSessionIds = candidateSessionIds.filter(id => positiveIds.includes(id));
-            else finalSessionIds = candidateSessionIds.filter(id => !positiveIds.includes(id));
-        }
-
-        if (finalSessionIds.length === 0) {
-            alert("No hay datos para exportar con los filtros seleccionados.");
-            return;
-        }
-
-        const { data: allMessages, error: messagesError } = await supabase.from(currentConfig.tableName).select('*').in('session_id', finalSessionIds).order('created_at', { ascending: true });
-        if (messagesError) throw messagesError;
-
-        const headers = ['session_id', 'created_at', 'message_content'];
-        const csvRows = [headers.join(',')];
-        const escapeCSV = (str: string) => { if (str.includes(',') || str.includes('"') || str.includes('\n')) return `"${str.replace(/"/g, '""')}"`; return str; };
-        (allMessages || []).forEach(msg => {
-            const messageField = msg.message;
-            const rawText = (typeof messageField === 'object' && messageField !== null && 'text' in messageField) ? String(messageField.text) : String(messageField);
-            const row = [ escapeCSV(msg.session_id), escapeCSV(msg.created_at), escapeCSV(rawText.replace(/\n/g, ' ')), ];
-            csvRows.push(row.join(','));
-        });
-
-        const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        const date = new Date().toISOString().split('T')[0];
-        link.setAttribute('download', `historial_chat_${date}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (err: any) {
-        console.error("Error exporting CSV:", err);
-        alert(`Error al exportar CSV: ${err.message}`);
-    } finally {
-        setIsExporting(false);
-    }
-  };
+  
   
   const toggleSession = (sessionIdToToggle: string) => {
     setExpandedSessions(prev => ({ ...prev, [sessionIdToToggle]: !prev[sessionIdToToggle] }));
@@ -290,21 +174,8 @@ const HistoryPage: React.FC = () => {
               </div>
             ))}
             <div className="flex gap-2 col-span-full sm:col-span-1">
-                <button type="submit" className="flex-grow px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-800 h-10">
-                    Aplicar Filtros
-                </button>
-                <button 
-                    type="button" 
-                    onClick={handleExportCSV} 
-                    disabled={isExporting}
-                    className="flex-shrink-0 flex items-center justify-center p-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 h-10 w-10 disabled:opacity-50 disabled:cursor-wait"
-                    title="Descargar CSV"
-                >
-                    {isExporting ? 
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> :
-                        <DownloadIcon className="w-5 h-5"/>
-                    }
-                </button>
+                
+                
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mt-4">
