@@ -2,11 +2,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { ChatMessage } from '../types';
 
-const supabaseUrl = 'https://taxbbfzqnvgmrdhgfkmn.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRheGJiZnpxbnZnbXJkaGdma21uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMzNDQ1NTIsImV4cCI6MjA1ODkyMDU1Mn0.csaq7i-e5quffJbrkWtHtQj0sKNOl8mfIl9xIdQS5MM';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase URL and Anon Key must be provided.');
+  throw new Error('Supabase URL and Anon Key must be provided as VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
 }
 
 export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey);
