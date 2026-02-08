@@ -1,21 +1,22 @@
 # --- FASE 1: El Constructor ---
-# Usamos una imagen de Node para tener todas las herramientas de compilaci髇
+# Usamos una imagen de Node para tener todas las herramientas de compilaci贸n
 FROM node:20-alpine AS builder
 
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Copiamos los archivos de configuraci髇 y package.json
+# Copiamos los archivos de configuraci贸n y package.json
 COPY package.json package-lock.json* ./
 
 # Instalamos las dependencias
-RUN npm install
+# Usamos 'npm ci' que es m谩s r谩pido y eficiente para entornos de producci贸n/CI
+RUN npm ci && npm cache clean --force
 
-# Copiamos el resto del c骴igo
+# Copiamos el resto del c贸digo
 COPY . .
 
-# l paso m醩 importante! Compilamos la aplicaci髇.
-# Esto crea la carpeta /app/dist con los archivos est醫icos.
+# 隆El paso m谩s importante! Compilamos la aplicaci贸n.
+# Esto crea la carpeta /app/dist con los archivos est谩ticos.
 RUN npm run build
 
 
@@ -23,12 +24,12 @@ RUN npm run build
 # Usamos la imagen oficial de Caddy, el mismo servidor que usa Easypanel
 FROM caddy:2-alpine
 
-# Borramos el archivo de configuraci髇 por defecto de Caddy
+# Borramos el archivo de configuraci贸n por defecto de Caddy
 RUN rm /etc/caddy/Caddyfile
 
-# Copiamos nuestra propia configuraci髇 simple
+# Copiamos nuestra propia configuraci贸n simple
 COPY Caddyfile /etc/caddy/Caddyfile
 
 # Copiamos SOLAMENTE los archivos compilados de la FASE 1
-# desde la carpeta /app/dist del constructor a la carpeta ra韟 del servidor Caddy
+# desde la carpeta /app/dist del constructor a la carpeta ra铆z del servidor Caddy
 COPY --from=builder /app/dist/ /usr/share/caddy
