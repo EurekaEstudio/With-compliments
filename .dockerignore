@@ -8,7 +8,6 @@ dist
 .env.production
 README.md
 Dockerfile
-Caddyfile
 task.md
 implementation_plan.md
 walkthrough.md
