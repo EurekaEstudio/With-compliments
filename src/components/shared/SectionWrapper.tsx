@@ -1,0 +1,69 @@
+import { useRef, useEffect } from "react"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { cn } from "@/lib/utils"
+import { trackSectionView } from "@/lib/tracking"
+
+gsap.registerPlugin(ScrollTrigger)
+
+interface SectionWrapperProps {
+  id: string
+  children: React.ReactNode
+  className?: string
+  noPadding?: boolean
+}
+
+export function SectionWrapper({ id, children, className, noPadding }: SectionWrapperProps) {
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!sectionRef.current) return
+
+    const el = sectionRef.current
+
+    // Fade-in animation
+    gsap.fromTo(
+      el,
+      { opacity: 0, y: 60 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 1.2,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: el,
+          start: "top 85%",
+          once: true,
+        },
+      },
+    )
+
+    // Track section view
+    ScrollTrigger.create({
+      trigger: el,
+      start: "top 60%",
+      once: true,
+      onEnter: () => trackSectionView(id),
+    })
+
+    return () => {
+      ScrollTrigger.getAll()
+        .filter((t) => t.trigger === el)
+        .forEach((t) => t.kill())
+    }
+  }, [id])
+
+  return (
+    <section
+      ref={sectionRef}
+      id={id}
+      className={cn(
+        "relative w-full",
+        !noPadding && "py-24 md:py-32 lg:py-40 px-6 sm:px-8 md:px-14 lg:px-20",
+        className,
+      )}
+    >
+      <div className="max-w-7xl mx-auto">{children}</div>
+    </section>
+  )
+}

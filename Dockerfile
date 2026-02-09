@@ -1,35 +1,38 @@
-# --- FASE 1: El Constructor ---
-# Usamos una imagen de Node para tener todas las herramientas de compilación
-FROM node:20-alpine AS builder
+# ===================================
+# Stage 1: Build
+# ===================================
+FROM node:22-alpine AS builder
 
-# Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Copiamos los archivos de configuración y package.json
-COPY package.json package-lock.json* ./
+# Copy package files
+COPY package*.json ./
 
-# Instalamos las dependencias
-# Usamos 'npm ci' que es más rápido y eficiente para entornos de producción/CI
-RUN npm ci && npm cache clean --force
+# Install dependencies
+RUN npm ci --only=production=false
 
-# Copiamos el resto del código
+# Copy source code
 COPY . .
 
-# ¡El paso más importante! Compilamos la aplicación.
-# Esto crea la carpeta /app/dist con los archivos estáticos.
+# Build the app (output to /app/dist)
 RUN npm run build
 
+# ===================================
+# Stage 2: Production
+# ===================================
+FROM caddy:2.8.4-alpine
 
-# --- FASE 2: El Servidor Final ---
-# Usamos la imagen oficial de Caddy, el mismo servidor que usa Easypanel
-FROM caddy:2-alpine
+# Copy built assets from builder
+COPY --from=builder /app/dist /srv
 
-# Borramos el archivo de configuración por defecto de Caddy
-RUN rm /etc/caddy/Caddyfile
-
-# Copiamos nuestra propia configuración simple
+# Copy Caddyfile
 COPY Caddyfile /etc/caddy/Caddyfile
 
-# Copiamos SOLAMENTE los archivos compilados de la FASE 1
-# desde la carpeta /app/dist del constructor a la carpeta raíz del servidor Caddy
-COPY --from=builder /app/dist/ /usr/share/caddy
+# Expose port 80
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+# Caddy runs automatically with the Caddyfile

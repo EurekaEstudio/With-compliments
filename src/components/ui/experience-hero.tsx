@@ -1,0 +1,256 @@
+"use client"
+
+import React, { useRef, useEffect, useMemo } from "react"
+import { Canvas, useFrame, useThree } from "@react-three/fiber"
+import { Float, MeshDistortMaterial } from "@react-three/drei"
+import * as THREE from "three"
+import gsap from "gsap"
+import { BRAND, COPY } from "@/lib/constants"
+import { trackCTAClick } from "@/lib/tracking"
+
+/* ============================================
+   3D SCENE COMPONENTS
+   ============================================ */
+
+const LiquidBackground = () => {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const { viewport } = useThree()
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uMouse: { value: new THREE.Vector2(0, 0) },
+    }),
+    [],
+  )
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      const mat = meshRef.current.material as THREE.ShaderMaterial
+      mat.uniforms.uTime.value = state.clock.getElapsedTime()
+      mat.uniforms.uMouse.value.lerp(state.mouse, 0.05)
+    }
+  })
+
+  return (
+    <mesh ref={meshRef} scale={[viewport.width, viewport.height, 1]}>
+      <planeGeometry args={[1, 1]} />
+      <shaderMaterial
+        transparent
+        uniforms={uniforms}
+        vertexShader={`
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `}
+        fragmentShader={`
+          uniform float uTime;
+          uniform vec2 uMouse;
+          varying vec2 vUv;
+          void main() {
+            vec2 uv = vUv;
+            float t = uTime * 0.12;
+            vec2 m = uMouse * 0.08;
+            float wave = smoothstep(0.0, 1.0,
+              (sin(uv.x * 6.0 + t + m.x * 10.0) +
+               sin(uv.y * 5.0 - t + m.y * 10.0)) * 0.5 + 0.5
+            );
+            // Eureka palette: deep black with subtle cyan tint
+            vec3 dark = vec3(0.005, 0.008, 0.012);
+            vec3 mid = vec3(0.02, 0.06, 0.08);
+            gl_FragColor = vec4(mix(dark, mid, wave), 1.0);
+          }
+        `}
+      />
+    </mesh>
+  )
+}
+
+const Monolith = () => {
+  const meshRef = useRef<THREE.Mesh>(null)
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.2
+    }
+  })
+  return (
+    <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.8}>
+      <mesh ref={meshRef}>
+        <icosahedronGeometry args={[13, 1]} />
+        <MeshDistortMaterial
+          color="#061820"
+          emissive="#22C6EA"
+          emissiveIntensity={0.08}
+          speed={3}
+          distort={0.35}
+          roughness={0.05}
+          metalness={1.0}
+        />
+      </mesh>
+    </Float>
+  )
+}
+
+/* ============================================
+   HERO COMPONENT
+   ============================================ */
+
+export function ExperienceHero() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const revealRef = useRef<HTMLDivElement>(null)
+  const ctaRef = useRef<HTMLAnchorElement>(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        revealRef.current,
+        { filter: "blur(30px)", opacity: 0, scale: 1.02 },
+        { filter: "blur(0px)", opacity: 1, scale: 1, duration: 2.2, ease: "expo.out" },
+      )
+
+      gsap.from(".hero-card", {
+        x: 60,
+        opacity: 0,
+        stagger: 0.12,
+        duration: 1.5,
+        ease: "power4.out",
+        delay: 0.8,
+        clearProps: "all",
+      })
+
+      gsap.from(".hero-badge", {
+        y: -20,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+        delay: 0.3,
+      })
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!ctaRef.current) return
+        const rect = ctaRef.current.getBoundingClientRect()
+        const cx = rect.left + rect.width / 2
+        const cy = rect.top + rect.height / 2
+        const dist = Math.hypot(e.clientX - cx, e.clientY - cy)
+        if (dist < 150) {
+          gsap.to(ctaRef.current, {
+            x: (e.clientX - cx) * 0.35,
+            y: (e.clientY - cy) * 0.35,
+            duration: 0.6,
+          })
+        } else {
+          gsap.to(ctaRef.current, {
+            x: 0,
+            y: 0,
+            duration: 0.8,
+            ease: "elastic.out(1, 0.3)",
+          })
+        }
+      }
+      window.addEventListener("mousemove", handleMouseMove)
+      return () => window.removeEventListener("mousemove", handleMouseMove)
+    }, containerRef)
+    return () => ctx.revert()
+  }, [])
+
+  return (
+    <section
+      ref={containerRef}
+      id="hero"
+      className="relative min-h-screen w-full bg-[#020202] flex flex-col selection:bg-primary selection:text-primary-foreground overflow-hidden"
+    >
+      {/* 3D Canvas Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <Canvas
+          camera={{ position: [0, 0, 60], fov: 35 }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        >
+          <ambientLight intensity={0.4} />
+          <spotLight position={[50, 50, 50]} intensity={3} />
+          <LiquidBackground />
+          <Monolith />
+        </Canvas>
+      </div>
+
+      {/* 2D Overlay */}
+      <div
+        ref={revealRef}
+        className="relative z-10 w-full flex flex-col md:flex-row p-6 sm:p-8 md:p-14 lg:p-20 min-h-screen items-center md:items-stretch gap-8 lg:gap-10"
+      >
+        {/* Left: Main Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between pb-8 md:pb-6 w-full">
+          {/* Logo Badge */}
+          <div className="hero-badge flex items-center gap-3">
+            <div className="relative w-2.5 h-2.5 rounded-full bg-primary">
+              <div className="absolute inset-0 bg-primary rounded-full animate-ping opacity-30" />
+            </div>
+            <img
+              src={BRAND.logo}
+              alt={BRAND.fullName}
+              className="h-8 w-auto brightness-0 invert"
+            />
+          </div>
+
+          {/* Headline */}
+          <div className="max-w-4xl lg:-translate-y-8 pr-0 md:pr-12 mt-12 md:mt-0">
+            <h1 className="text-[clamp(2.2rem,6vw,5.5rem)] font-bold leading-[1.05] tracking-tight text-white">
+              {COPY.hero.title}
+            </h1>
+            <p className="mt-6 md:mt-8 text-sm md:text-base text-white/50 max-w-lg leading-relaxed font-light">
+              {COPY.hero.subtitle}
+            </p>
+          </div>
+
+          {/* CTA */}
+          <a
+            ref={ctaRef}
+            href={BRAND.ctaUrl}
+            onClick={() => trackCTAClick("hero")}
+            className="w-fit flex items-center gap-5 group mt-10 md:mt-0 lg:-translate-y-16"
+          >
+            <div className="w-14 h-14 rounded-full border border-primary/30 flex items-center justify-center group-hover:bg-primary group-hover:glow-cyan transition-all duration-500 overflow-hidden">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="group-hover:stroke-primary-foreground stroke-primary transition-colors duration-500"
+              >
+                <path
+                  d="M7 17L17 7M17 7H8M17 7V16"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <span className="text-sm font-semibold text-white uppercase tracking-widest">
+              {COPY.hero.cta}
+            </span>
+          </a>
+        </div>
+
+        {/* Right: Pilar Cards */}
+        <div className="w-full md:w-72 lg:w-80 flex-shrink-0 flex flex-col gap-4 justify-center z-20">
+          {COPY.pillaresOverview.pilares.map((pilar) => (
+            <div
+              key={pilar.num}
+              className="hero-card glass rounded-2xl p-6 sm:p-7 hover:glass-strong transition-all duration-500"
+            >
+              <span className="text-[10px] text-white/25 uppercase tracking-[0.2em] font-medium block mb-3">
+                {pilar.num} // {pilar.name}
+              </span>
+              <p className="text-sm text-white/60 leading-snug">
+                {pilar.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default ExperienceHero
