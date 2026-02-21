@@ -59,7 +59,7 @@ export function SectionWrapper({ id, children, className, noPadding }: SectionWr
       id={id}
       className={cn(
         "relative w-full",
-        !noPadding && "py-24 md:py-32 lg:py-40 px-6 sm:px-8 md:px-14 lg:px-20",
+        !noPadding && "py-16 md:py-20 lg:py-28 px-6 sm:px-8 md:px-14 lg:px-20",
         className,
       )}
     >

@@ -112,6 +112,8 @@
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
 
   --animate-loading-slide: loading-slide 1.5s ease-in-out infinite;
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 }
 
 @layer base {
@@ -207,5 +209,35 @@
   }
   100% {
     transform: translateX(100%);
+  }
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+@keyframes logo-cloud-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.logo-cloud-track {
+  animation: logo-cloud-scroll 90s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .logo-cloud-track {
+    gap: 20px;
+    animation-duration: 35s;
   }
 }

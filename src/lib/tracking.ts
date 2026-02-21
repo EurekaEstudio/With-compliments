@@ -24,7 +24,7 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>) 
 }
 
 export const trackCTAClick = (location: string) =>
-  trackEvent("cta_click", { location, cta_text: "Agendar diagnóstico" })
+  trackEvent("cta_click", { location })
 
 export const trackSectionView = (sectionId: string) =>
   trackEvent("section_view", { section_id: sectionId })
@@ -32,5 +32,5 @@ export const trackSectionView = (sectionId: string) =>
 export const trackScrollDepth = (percentage: number) =>
   trackEvent("scroll_depth", { depth: percentage })
 
-export const trackFormSubmit = () =>
-  trackEvent("form_submit", { form: "agendar_diagnostico" })
+export const trackChatOpen = (source: string) =>
+  trackEvent("chat_open", { source })

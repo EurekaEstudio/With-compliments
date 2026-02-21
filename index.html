@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Eureka Estudio Creativo — No vendemos servicios. Construimos sistemas que venden. Ecosistema digital completo: landing pages, agentes de IA y tráfico de alta intención." />
+  <meta name="description"
+    content="Eureka Estudio Creativo — No vendemos solo páginas. Construimos sistemas que venden. Ecosistema digital completo: Smart Landing Pages, agentes de IA y tráfico de alta intención." />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Eureka — Sistemas que Venden" />
-  <meta property="og:description" content="Ecosistema digital completo para adquisición de clientes. Landing pages + IA + tráfico de alta intención." />
+  <meta property="og:description"
+    content="Ecosistema digital completo para adquisición de clientes. Landing pages + IA + tráfico de alta intención." />
   <meta property="og:image" content="/og-image.jpg" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://eurekaestudiocreativo.com" />
@@ -15,21 +18,29 @@
   <!-- Preconnect for fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" />
+  <!-- Preload critical font for faster FCP -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" as="style"
+    onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+  </noscript>
 
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <title>Eureka — No vendemos servicios. Construimos sistemas que venden.</title>
+  <title>Eureka — No vendemos solo páginas. Construimos sistemas que venden.</title>
 
   <!-- ============================================
        GOOGLE TAG MANAGER
        Reemplazar GTM-XXXXXXX con el ID real del contenedor
        ============================================ -->
   <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-XXXXXXX');
+    (function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-XXXXXXX');
   </script>
 
   <!-- ============================================
@@ -79,14 +90,666 @@
   </script>
   -->
 </head>
+
 <body class="bg-black text-white antialiased">
   <!-- GTM noscript fallback -->
   <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
-      height="0" width="0" style="display:none;visibility:hidden"></iframe>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe>
   </noscript>
 
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+
+  <!-- ============================================
+       CHAT WIDGET — DANTE IA (Gaby)
+       ============================================ -->
+  <div id="chat-widget-container" style="visibility:hidden;opacity:0;transition:opacity 0.5s,visibility 0.5s">
+    <!-- Chat Toggle Button -->
+    <button id="chat-toggle-btn" aria-label="Abrir chat">
+      <svg id="chat-icon-open" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+      <svg id="chat-icon-close" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+
+    <!-- Initial Message Bubble -->
+    <div id="initial-message-bubble" class="show">
+      <span>Hola, soy Gaby de Eureka. ¿En qué puedo ayudarte?</span>
+      <button id="bubble-close" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chat-window">
+      <!-- Header -->
+      <div id="chat-header">
+        <div id="chat-header-info">
+          <div id="chat-avatar">G</div>
+          <div>
+            <div id="chat-header-name">Gaby — Eureka IA</div>
+            <div id="chat-header-status">En línea</div>
+          </div>
+        </div>
+        <button id="chat-close-btn" aria-label="Cerrar chat">&times;</button>
+      </div>
+
+      <!-- Messages -->
+      <div id="chat-messages">
+        <div class="chat-msg bot welcome-msg-item">
+          <div class="chat-msg-bubble">¡Hola! Soy Gaby, la asistente virtual de Eureka Estudio Creativo. ¿En qué puedo
+            ayudarte hoy?</div>
+        </div>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div id="typing-indicator" style="display:none">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- Quick Responses -->
+      <div id="quick-responses">
+        <button class="qr-btn" data-msg="Quiero saber sobre sus servicios">Servicios</button>
+        <button class="qr-btn" data-msg="Quiero ver los planes y precios">Precios</button>
+        <button class="qr-btn" data-msg="Necesito una auditoría de mi web">Auditoría</button>
+      </div>
+
+      <!-- Input -->
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off" />
+        <button id="chat-send-btn" aria-label="Enviar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ===== CHAT WIDGET STYLES ===== */
+    #chat-widget-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      font-family: 'Poppins', system-ui, sans-serif;
+    }
+
+    /* Toggle Button */
+    #chat-toggle-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #22C6EA;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 24px rgba(34, 198, 234, 0.35);
+      transition: transform 0.3s, box-shadow 0.3s;
+      color: #000;
+      position: relative;
+      z-index: 10;
+    }
+
+    #chat-toggle-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 32px rgba(34, 198, 234, 0.5);
+    }
+
+    /* Initial Bubble */
+    #initial-message-bubble {
+      position: absolute;
+      bottom: 72px;
+      right: 0;
+      background: #1a1a1a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 16px 16px 4px 16px;
+      font-size: 13px;
+      max-width: 260px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(10px) scale(0.95);
+      transition: opacity 0.4s, transform 0.4s;
+      pointer-events: none;
+      line-height: 1.4;
+    }
+
+    #initial-message-bubble.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    #bubble-close {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #333;
+      color: #aaa;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    /* Chat Window */
+    #chat-window {
+      position: absolute;
+      bottom: 72px;
+      right: 0;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      height: 520px;
+      max-height: calc(100vh - 120px);
+      background: #0a0a0a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      display: flex;
+      /* Always display:flex, but hidden via opacity/transform */
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+      /* Animation properties */
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transform-origin: bottom right;
+      transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+
+    #chat-widget-container.is-open #chat-window {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    #chat-widget-container.is-open #initial-message-bubble {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #chat-widget-container.is-open #chat-icon-open {
+      display: none;
+    }
+
+    #chat-widget-container.is-open #chat-icon-close {
+      display: block;
+    }
+
+    /* Header */
+    #chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      background: #111;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    #chat-header-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #chat-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22C6EA, #0EA5E9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #000;
+    }
+
+    #chat-header-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    #chat-header-status {
+      font-size: 11px;
+      color: #22C6EA;
+    }
+
+    #chat-close-btn {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    /* Messages */
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #chat-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .chat-msg {
+      display: flex;
+      max-width: 85%;
+    }
+
+    .chat-msg.bot {
+      align-self: flex-start;
+    }
+
+    .chat-msg.user {
+      align-self: flex-end;
+    }
+
+    .chat-msg-bubble {
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .chat-msg.bot .chat-msg-bubble {
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-msg.user .chat-msg-bubble {
+      background: #22C6EA;
+      color: #000;
+      border-bottom-right-radius: 4px;
+      font-weight: 500;
+    }
+
+    /* Typing Indicator */
+    #typing-indicator {
+      padding: 8px 16px;
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      gap: 4px;
+      background: #1a1a1a;
+      padding: 10px 16px;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+    }
+
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #555;
+      animation: typingBounce 1.2s infinite;
+    }
+
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes typingBounce {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+
+      30% {
+        transform: translateY(-6px);
+        opacity: 1;
+      }
+    }
+
+    /* Quick Responses */
+    #quick-responses {
+      display: flex;
+      gap: 6px;
+      padding: 8px 16px;
+      flex-wrap: wrap;
+    }
+
+    .qr-btn {
+      background: transparent;
+      border: 1px solid rgba(34, 198, 234, 0.3);
+      color: #22C6EA;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      font-family: inherit;
+    }
+
+    .qr-btn:hover {
+      background: rgba(34, 198, 234, 0.1);
+      border-color: rgba(34, 198, 234, 0.6);
+    }
+
+    /* Input */
+    #chat-input-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: #111;
+    }
+
+    #chat-input {
+      flex: 1;
+      background: #1a1a1a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    #chat-input:focus {
+      border-color: rgba(34, 198, 234, 0.4);
+    }
+
+    #chat-input::placeholder {
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    #chat-send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #22C6EA;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    #chat-send-btn:hover {
+      opacity: 0.85;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 480px) {
+      #chat-widget-container {
+        bottom: 16px;
+        right: 16px;
+      }
+
+      #chat-window {
+        width: calc(100vw - 32px);
+        height: calc(100vh - 100px);
+        bottom: 68px;
+      }
+
+      #chat-toggle-btn {
+        width: 52px;
+        height: 52px;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var WEBHOOK_URL = 'https://flow.eurekaestudiocreativo.com/webhook/4e7adeb2-4949-44de-8eb8-c4e59abb6f85/chat';
+      var SESSION_KEY = 'eureka_chat_session';
+      var MAX_RETRIES = 2;
+
+      var container = document.getElementById('chat-widget-container');
+      var toggleBtn = document.getElementById('chat-toggle-btn');
+      var closeBtn = document.getElementById('chat-close-btn');
+      var bubbleClose = document.getElementById('bubble-close');
+      var messagesEl = document.getElementById('chat-messages');
+      var inputEl = document.getElementById('chat-input');
+      var sendBtn = document.getElementById('chat-send-btn');
+      var typingEl = document.getElementById('typing-indicator');
+      var qrContainer = document.getElementById('quick-responses');
+      var bubble = document.getElementById('initial-message-bubble');
+
+      // Session ID
+      var sessionId = sessionStorage.getItem(SESSION_KEY);
+      if (!sessionId) {
+        sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem(SESSION_KEY, sessionId);
+      }
+
+      // Toggle chat
+      function toggleChat() {
+        container.classList.toggle('is-open');
+        if (bubble) bubble.classList.remove('show');
+        if (container.classList.contains('is-open')) {
+          inputEl.focus();
+        }
+      }
+
+      toggleBtn.addEventListener('click', toggleChat);
+      closeBtn.addEventListener('click', function () {
+        container.classList.remove('is-open');
+      });
+      if (bubbleClose) {
+        bubbleClose.addEventListener('click', function (e) {
+          e.stopPropagation();
+          bubble.classList.remove('show');
+        });
+      }
+
+      // Add message to chat
+      function addMessage(text, sender) {
+        var div = document.createElement('div');
+        div.className = 'chat-msg ' + sender;
+        var bubbleDiv = document.createElement('div');
+        bubbleDiv.className = 'chat-msg-bubble';
+        bubbleDiv.textContent = text;
+        div.appendChild(bubbleDiv);
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      // Show/hide typing
+      function showTyping() { typingEl.style.display = 'block'; messagesEl.scrollTop = messagesEl.scrollHeight; }
+      function hideTyping() { typingEl.style.display = 'none'; }
+
+      // Hide quick responses after first interaction
+      function hideQR() { qrContainer.style.display = 'none'; }
+
+      // Remove welcome message on external call
+      function removeWelcome() {
+        var welc = messagesEl.querySelectorAll('.welcome-msg-item');
+        welc.forEach(function (el) { el.remove(); });
+      }
+
+      // Send to webhook
+      function sendToWebhook(message, isQR, retryCount) {
+        if (typeof retryCount === 'undefined') retryCount = 0;
+
+        showTyping();
+        var payload = {
+          action: 'sendMessage',
+          chatInput: message,
+          sessionId: sessionId
+        };
+
+        fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+          .then(function (res) {
+            if (res.status >= 500 && retryCount < MAX_RETRIES) {
+              setTimeout(function () {
+                sendToWebhook(message, isQR, retryCount + 1);
+              }, 1500);
+              return null;
+            }
+            return res.json();
+          })
+          .then(function (data) {
+            hideTyping();
+            if (!data) return;
+            var reply = data.output || data.response || data.text || data.message;
+            if (reply) {
+              addMessage(reply, 'bot');
+            }
+          })
+          .catch(function () {
+            hideTyping();
+            if (retryCount < MAX_RETRIES) {
+              setTimeout(function () {
+                sendToWebhook(message, isQR, retryCount + 1);
+              }, 1500);
+            }
+          });
+      }
+
+      // Expose globally for React integration
+      window.sendToWebhook = sendToWebhook;
+
+      // Send user message
+      function handleSend() {
+        var text = inputEl.value.trim();
+        if (!text) return;
+        addMessage(text, 'user');
+        inputEl.value = '';
+        hideQR();
+        sendToWebhook(text, false);
+      }
+
+      sendBtn.addEventListener('click', handleSend);
+      inputEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') handleSend();
+      });
+
+      // Quick response buttons
+      qrContainer.addEventListener('click', function (e) {
+        var btn = e.target.closest('.qr-btn');
+        if (!btn) return;
+        var msg = btn.getAttribute('data-msg');
+        addMessage(msg, 'user');
+        hideQR();
+        sendToWebhook(msg, true);
+      });
+
+      // Integration: buttons with class "mi-clase-abrir-chat" + data-chat-intent
+      document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.mi-clase-abrir-chat');
+        if (!btn) return;
+        e.preventDefault();
+        container.classList.add('is-open');
+        if (bubble) bubble.classList.remove('show');
+        var intent = btn.getAttribute('data-chat-intent');
+        if (intent) {
+          removeWelcome();
+          sendToWebhook(intent, false);
+        }
+      });
+
+      // --- Scroll-triggered chat reveal ---
+      // We poll for the React-rendered element since it loads async
+      var chatSeen = false;
+      var chatTriggered = false;
+
+      function showWidget() {
+        container.style.visibility = 'visible';
+        container.style.opacity = '1';
+      }
+
+      // Expose globally so React CTA buttons can force-reveal the widget
+      window.showChatWidget = showWidget;
+
+      function triggerChatOpen() {
+        if (chatTriggered) return;
+        chatTriggered = true;
+        showWidget();
+        setTimeout(function () {
+          if (!container.classList.contains('is-open')) {
+            container.classList.add('is-open');
+            if (bubble) bubble.classList.remove('show');
+            if (inputEl) inputEl.focus();
+          }
+        }, 700);
+      }
+
+      function waitForStatAndObserve() {
+        var statTarget = document.getElementById('pilar-agente-stat');
+        if (!statTarget) {
+          // React hasn't rendered it yet — try again next frame
+          requestAnimationFrame(waitForStatAndObserve);
+          return;
+        }
+        if (!('IntersectionObserver' in window)) {
+          setTimeout(showWidget, 5000);
+          return;
+        }
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              chatSeen = true;
+              showWidget();
+            } else if (chatSeen) {
+              triggerChatOpen();
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.4 });
+        observer.observe(statTarget);
+      }
+
+      // Start polling after a short delay to let React hydrate
+      setTimeout(waitForStatAndObserve, 800);
+    })();
+  </script>
 </body>
+
 </html>

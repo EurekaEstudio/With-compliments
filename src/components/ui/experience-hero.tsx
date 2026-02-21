@@ -1,31 +1,33 @@
 "use client"
 
-import React, { useRef, useEffect, useMemo } from "react"
+import { useRef, useEffect, useMemo } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Float, MeshDistortMaterial } from "@react-three/drei"
-import * as THREE from "three"
+import { Mesh, ShaderMaterial, Vector2 } from "three"
 import gsap from "gsap"
 import { BRAND, COPY } from "@/lib/constants"
 import { trackCTAClick } from "@/lib/tracking"
+import { openChatWithIntent } from "@/hooks/use-chat-widget"
+import { GooeyText } from "./gooey-text-morphing"
 
 /* ============================================
    3D SCENE COMPONENTS
    ============================================ */
 
 const LiquidBackground = () => {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const meshRef = useRef<Mesh>(null)
   const { viewport } = useThree()
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uMouse: { value: new THREE.Vector2(0, 0) },
+      uMouse: { value: new Vector2(0, 0) },
     }),
     [],
   )
 
   useFrame((state) => {
     if (meshRef.current) {
-      const mat = meshRef.current.material as THREE.ShaderMaterial
+      const mat = meshRef.current.material as ShaderMaterial
       mat.uniforms.uTime.value = state.clock.getElapsedTime()
       mat.uniforms.uMouse.value.lerp(state.mouse, 0.05)
     }
@@ -68,7 +70,7 @@ const LiquidBackground = () => {
 }
 
 const Monolith = () => {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const meshRef = useRef<Mesh>(null)
   useFrame((state) => {
     if (meshRef.current) {
       meshRef.current.rotation.y = state.clock.getElapsedTime() * 0.2
@@ -99,7 +101,7 @@ const Monolith = () => {
 export function ExperienceHero() {
   const containerRef = useRef<HTMLDivElement>(null)
   const revealRef = useRef<HTMLDivElement>(null)
-  const ctaRef = useRef<HTMLAnchorElement>(null)
+  const ctaRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -126,6 +128,8 @@ export function ExperienceHero() {
         ease: "power3.out",
         delay: 0.3,
       })
+
+
 
       const handleMouseMove = (e: MouseEvent) => {
         if (!ctaRef.current) return
@@ -183,57 +187,68 @@ export function ExperienceHero() {
         <div className="flex-1 min-w-0 flex flex-col justify-between pb-8 md:pb-6 w-full">
           {/* Logo Badge */}
           <div className="hero-badge flex items-center gap-3">
-            <div className="relative w-2.5 h-2.5 rounded-full bg-primary">
-              <div className="absolute inset-0 bg-primary rounded-full animate-ping opacity-30" />
-            </div>
             <img
               src={BRAND.logo}
-              alt={BRAND.fullName}
-              className="h-8 w-auto brightness-0 invert"
+              alt={BRAND.name}
+              className="h-16 md:h-20 lg:h-24 w-auto"
             />
           </div>
 
           {/* Headline */}
-          <div className="max-w-4xl lg:-translate-y-8 pr-0 md:pr-12 mt-12 md:mt-0">
-            <h1 className="text-[clamp(2.2rem,6vw,5.5rem)] font-bold leading-[1.05] tracking-tight text-white">
-              {COPY.hero.title}
+          <div className="max-w-3xl md:max-w-4xl lg:max-w-4xl xl:max-w-3xl pr-0 md:pr-8 mt-16 md:mt-20">
+            <h1 className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold leading-[1.2] tracking-tight text-white">
+              Diseñamos tu próxima página web.
             </h1>
-            <p className="mt-6 md:mt-8 text-sm md:text-base text-white/50 max-w-lg leading-relaxed font-light">
+            <div className="flex flex-wrap items-baseline gap-x-[0.45em] mt-1">
+              <span className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold leading-[1.2] tracking-tight text-white whitespace-nowrap">Una que</span>
+              <GooeyText
+                texts={["vende sola", "trabaja 24/7", "cierra clientes", "agenda citas"]}
+                morphTime={1.5}
+                cooldownTime={1.2}
+                textClassName="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold text-primary whitespace-nowrap leading-[1.2]"
+              />
+            </div>
+            <p className="mt-8 md:mt-10 text-sm md:text-base text-white/50 max-w-lg leading-relaxed font-light">
               {COPY.hero.subtitle}
             </p>
           </div>
 
-          {/* CTA */}
-          <a
-            ref={ctaRef}
-            href={BRAND.ctaUrl}
-            onClick={() => trackCTAClick("hero")}
-            className="w-fit flex items-center gap-5 group mt-10 md:mt-0 lg:-translate-y-16"
-          >
-            <div className="w-14 h-14 rounded-full border border-primary/30 flex items-center justify-center group-hover:bg-primary group-hover:glow-cyan transition-all duration-500 overflow-hidden">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="group-hover:stroke-primary-foreground stroke-primary transition-colors duration-500"
-              >
-                <path
-                  d="M7 17L17 7M17 7H8M17 7V16"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold text-white uppercase tracking-widest">
-              {COPY.hero.cta}
-            </span>
-          </a>
+          {/* CTAs */}
+          <div className="flex flex-col gap-4 mt-12 md:mt-14">
+            <button
+              ref={ctaRef}
+              onClick={() => {
+                trackCTAClick("hero")
+                openChatWithIntent(COPY.hero.ctaIntent)
+              }}
+              className="w-fit flex items-center gap-5 group"
+              aria-label="Solicitar auditoría de fugas gratuita - Chatear con Eureka"
+            >
+              <div className="w-14 h-14 rounded-full border border-primary/30 flex items-center justify-center group-hover:bg-primary group-hover:glow-cyan transition-all duration-500 overflow-hidden">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="group-hover:stroke-primary-foreground stroke-primary transition-colors duration-500"
+                >
+                  <path
+                    d="M7 17L17 7M17 7H8M17 7V16"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold text-white uppercase tracking-widest">
+                {COPY.hero.cta}
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Right: Pilar Cards */}
-        <div className="w-full md:w-72 lg:w-80 flex-shrink-0 flex flex-col gap-4 justify-center z-20">
+        {/* Right: Pilar Cards - Hidden on tablets and standard desktops to avoid collision with H1 */}
+        <div className="hidden 2xl:flex w-80 flex-shrink-0 flex-col gap-4 justify-center z-20">
           {COPY.pillaresOverview.pilares.map((pilar) => (
             <div
               key={pilar.num}

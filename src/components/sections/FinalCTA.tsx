@@ -1,120 +1,94 @@
-import { useState, type FormEvent } from "react"
 import { SectionWrapper } from "@/components/shared/SectionWrapper"
 import { COPY, BRAND } from "@/lib/constants"
-import { trackCTAClick, trackFormSubmit } from "@/lib/tracking"
+import { MapPin, Phone, Mail, Globe } from "lucide-react"
 
 export function FinalCTA() {
-  const [submitted, setSubmitted] = useState(false)
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    trackFormSubmit()
-    trackCTAClick("final_cta_form")
-    setSubmitted(true)
-  }
+  const c = COPY.finalCta
 
   return (
-    <SectionWrapper id="agendar" className="pb-16 md:pb-24">
-      <div className="divider-gradient mb-16 md:mb-20" />
+    <SectionWrapper id="agendar" className="overflow-hidden">
+      {/* ═══════ FOOTER ═══════ */}
+      <footer className="relative z-10 border-t border-white/5 pt-12 pb-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Top: Logo + Tagline + Nav + Contact */}
+          <div className="flex flex-col md:flex-row items-start justify-between gap-10 mb-12">
+            {/* Brand */}
+            <div className="max-w-sm">
+              <a href={BRAND.website} target="_blank" rel="noopener noreferrer">
+                <img src={BRAND.logo} alt={BRAND.name} className="h-20 md:h-24 w-auto mb-4" />
+              </a>
+              <p className="text-sm text-white/40 leading-relaxed">
+                {c.footer.tagline}
+              </p>
+            </div>
 
-      {/* Main Copy */}
-      <div className="max-w-4xl mx-auto text-center mb-16 md:mb-20">
-        <h2 className="text-section-title text-white leading-snug">
-          {COPY.finalCta.title}
-        </h2>
-      </div>
+            {/* Nav Links */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-bold text-white/25 uppercase tracking-[0.2em] mb-1">Navegación</span>
+              {c.footer.navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-white/50 hover:text-white transition-colors"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
 
-      {/* Contact Form */}
-      <div className="max-w-xl mx-auto mb-16">
-        {!submitted ? (
-          <form onSubmit={handleSubmit} className="glass-strong rounded-2xl p-8 md:p-10 space-y-5">
-            <div>
-              <label htmlFor="nombre" className="block text-xs text-white/40 uppercase tracking-wider mb-2 font-medium">
-                Nombre
-              </label>
-              <input
-                type="text"
-                id="nombre"
-                name="nombre"
-                required
-                className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-5 py-3.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all duration-300"
-                placeholder="Tu nombre"
-              />
+            {/* Services */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-bold text-white/25 uppercase tracking-[0.2em] mb-1">Servicios</span>
+              {c.footer.services.map((service) => (
+                <span key={service} className="text-sm text-white/50">
+                  {service}
+                </span>
+              ))}
             </div>
-            <div>
-              <label htmlFor="email" className="block text-xs text-white/40 uppercase tracking-wider mb-2 font-medium">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-5 py-3.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all duration-300"
-                placeholder="tu@email.com"
-              />
+
+            {/* Contact */}
+            <div className="flex flex-col gap-3">
+              <span className="text-xs font-bold text-white/25 uppercase tracking-[0.2em] mb-1">Contacto</span>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-primary/60 mt-0.5 flex-shrink-0" />
+                <span className="text-sm text-white/50">{c.footer.address}</span>
+              </div>
+              <a
+                href={`https://wa.me/${c.footer.whatsapp.replace(/[\s+]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-white/50 hover:text-primary transition-colors"
+              >
+                <Phone className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                {c.footer.whatsapp}
+              </a>
+              <a
+                href={`mailto:${c.footer.email}`}
+                className="flex items-center gap-2 text-sm text-white/50 hover:text-primary transition-colors"
+              >
+                <Mail className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                {c.footer.email}
+              </a>
+              <a
+                href={`https://${c.footer.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-white/50 hover:text-primary transition-colors"
+              >
+                <Globe className="w-4 h-4 text-primary/60 flex-shrink-0" />
+                {c.footer.website}
+              </a>
             </div>
-            <div>
-              <label htmlFor="telefono" className="block text-xs text-white/40 uppercase tracking-wider mb-2 font-medium">
-                Teléfono / WhatsApp
-              </label>
-              <input
-                type="tel"
-                id="telefono"
-                name="telefono"
-                className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-5 py-3.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all duration-300"
-                placeholder="+56 9 1234 5678"
-              />
-            </div>
-            <div>
-              <label htmlFor="mensaje" className="block text-xs text-white/40 uppercase tracking-wider mb-2 font-medium">
-                Cuéntanos brevemente sobre tu negocio
-              </label>
-              <textarea
-                id="mensaje"
-                name="mensaje"
-                rows={3}
-                className="w-full bg-white/[0.05] border border-white/10 rounded-xl px-5 py-3.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all duration-300 resize-none"
-                placeholder="Qué vendes, a quién, y cuál es tu mayor desafío..."
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground font-semibold text-base py-4 rounded-full hover:glow-cyan-strong hover:scale-[1.02] transition-all duration-500 mt-2"
-            >
-              {COPY.finalCta.cta}
-            </button>
-            <p className="text-center text-xs text-white/30 mt-3">
-              {COPY.finalCta.subtext}
-            </p>
-          </form>
-        ) : (
-          <div className="glass-strong rounded-2xl p-10 md:p-14 text-center glow-cyan">
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-3">Recibido</h3>
-            <p className="text-sm text-white/50">
-              Nos pondremos en contacto contigo dentro de las próximas 24 horas para agendar tu diagnóstico.
-            </p>
           </div>
-        )}
-      </div>
 
-      {/* CHAT WIDGET: insertar script del agente IA aquí */}
-
-      {/* Footer */}
-      <footer className="text-center pt-10 border-t border-white/5">
-        <img
-          src={BRAND.logo}
-          alt={BRAND.fullName}
-          className="h-6 w-auto brightness-0 invert mx-auto mb-4 opacity-40"
-        />
-        <p className="text-xs text-white/20">
-          &copy; {new Date().getFullYear()} {BRAND.fullName}. Todos los derechos reservados.
-        </p>
+          {/* Bottom: Legal */}
+          <div className="border-t border-white/5 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-white/25">
+              &copy; {new Date().getFullYear()} {BRAND.fullName}. {c.footer.legal}
+            </p>
+            <p className="text-xs text-white/25">{c.footer.location}</p>
+          </div>
+        </div>
       </footer>
     </SectionWrapper>
   )

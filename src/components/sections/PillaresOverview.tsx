@@ -1,87 +1,112 @@
-import { useRef, useEffect } from "react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Server, BrainCircuit, Rocket } from "lucide-react"
 import { SectionWrapper } from "@/components/shared/SectionWrapper"
 import { COPY } from "@/lib/constants"
+import { PulseDivider, CircuitNodes } from "@/components/ui/svg-decorations"
 
-gsap.registerPlugin(ScrollTrigger)
+const icons = [Server, BrainCircuit, Rocket]
 
 export function PillaresOverview() {
-  const cardsRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!cardsRef.current) return
-
-    const cards = cardsRef.current.querySelectorAll(".pilar-card")
-    gsap.fromTo(
-      cards,
-      { y: 40, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        stagger: 0.15,
-        duration: 1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: cardsRef.current,
-          start: "top 80%",
-          once: true,
-        },
-      },
-    )
-
-    return () => {
-      ScrollTrigger.getAll()
-        .filter((t) => t.trigger === cardsRef.current)
-        .forEach((t) => t.kill())
-    }
-  }, [])
+  const [activeTab, setActiveTab] = useState(0)
 
   return (
     <SectionWrapper id="pilares">
       {/* Divider */}
-      <div className="divider-gradient mb-16 md:mb-20" />
+      <PulseDivider className="mb-16 md:mb-24" />
 
       {/* Header */}
-      <div className="max-w-3xl mb-16 md:mb-20">
-        <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary border border-primary/30 rounded-full px-4 py-1.5 mb-6">
+      <div className="max-w-3xl mb-12 md:mb-16 mx-auto text-center">
+        <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-primary bg-primary/10 border border-primary/20 rounded-full px-5 py-2 mb-6">
           {COPY.pillaresOverview.badge}
         </span>
-        <h2 className="text-section-title text-white mb-5">
+        <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
           {COPY.pillaresOverview.title}
         </h2>
-        <p className="text-section-subtitle text-white/50">
+        <p className="text-lg md:text-xl text-white/50 font-light max-w-2xl mx-auto">
           {COPY.pillaresOverview.subtitle}
         </p>
       </div>
 
-      {/* Pilar Cards */}
-      <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-        {COPY.pillaresOverview.pilares.map((pilar) => (
-          <div
-            key={pilar.num}
-            className="pilar-card glass rounded-2xl p-8 md:p-10 group hover:glow-cyan transition-all duration-700 relative overflow-hidden"
-          >
-            {/* Large decorative number */}
-            <span className="absolute -top-4 -right-2 text-[7rem] font-bold text-white/[0.03] leading-none select-none pointer-events-none">
-              {pilar.num}
-            </span>
+      {/* Interactive Flex Accordion */}
+      <div className="flex flex-col md:flex-row gap-4 h-[600px] md:h-[500px] w-full max-w-6xl mx-auto">
+        {COPY.pillaresOverview.pilares.map((pilar, index) => {
+          const isActive = activeTab === index
+          const Icon = icons[index]
 
-            <span className="text-primary text-sm font-semibold tracking-wider uppercase block mb-4">
-              {pilar.num}
-            </span>
-            <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
-              {pilar.name}
-            </h3>
-            <p className="text-sm text-white/50 leading-relaxed">
-              {pilar.description}
-            </p>
+          return (
+            <motion.div
+              layout
+              key={pilar.num}
+              onClick={() => setActiveTab(index)}
+              onHoverStart={() => setActiveTab(index)}
+              initial={{ borderRadius: "1.5rem" }}
+              animate={{
+                flexBasis: isActive ? "60%" : "20%",
+                borderRadius: "1.5rem",
+              }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+              className={`relative overflow-hidden cursor-pointer group flex flex-col justify-end p-6 border transition-colors duration-500 ${isActive
+                  ? "border-primary/30 shadow-[0_0_30px_rgba(34,198,234,0.1)]"
+                  : "border-white/5 hover:border-white/15 bg-white/[0.02]"
+                }`}
+            >
+              {/* Animated Background */}
+              <AnimatePresence>
+                {isActive && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute inset-0 bg-gradient-to-t from-primary/10 via-primary/5 to-transparent z-0"
+                  />
+                )}
+              </AnimatePresence>
 
-            {/* Bottom accent line */}
-            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary/0 via-primary/40 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          </div>
-        ))}
+              {/* Huge Background Number */}
+              <span className={`absolute -right-4 top-4 text-[12rem] md:text-[16rem] font-bold leading-none select-none pointer-events-none transition-all duration-700 ${isActive ? 'text-primary/[0.04]' : 'text-white/[0.02]'}`}>
+                {pilar.num}
+              </span>
+
+              {/* Content Wrapper */}
+              <div className="relative z-10 flex flex-col h-full justify-between">
+                {/* Top Icon & Number Badge */}
+                <div className="flex items-start justify-between">
+                  <motion.div
+                    layout="position"
+                    className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-500 ${isActive ? "bg-primary/20 border-primary/40" : "bg-white/5 border-white/10"
+                      }`}
+                  >
+                    <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-white/40"}`} />
+                  </motion.div>
+                </div>
+
+                {/* Bottom Text Content */}
+                <motion.div layout="position" className="mt-auto">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`text-xs font-bold tracking-[0.2em] uppercase transition-colors duration-500 ${isActive ? "text-primary" : "text-white/30"}`}>
+                      Pilar {pilar.num}
+                    </span>
+                  </div>
+
+                  <h3 className={`text-2xl md:text-3xl font-bold tracking-tight transition-all duration-500 ${isActive ? "text-white mb-4" : "text-white/60 mb-0 md:truncate"}`}>
+                    {pilar.name}
+                  </h3>
+
+                  <div className={`overflow-hidden transition-all duration-500 origin-bottom ${isActive ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+                    <p className="text-white/60 text-sm md:text-base leading-relaxed font-light md:w-5/6">
+                      {pilar.description}
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          )
+        })}
       </div>
+      {/* Circuit nodes connecting to pilar sections */}
+      <CircuitNodes className="mt-16 md:mt-24" />
     </SectionWrapper>
   )
 }
