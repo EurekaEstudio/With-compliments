@@ -1,5 +1,5 @@
 // ===================================================
-// EUREKA ESTUDIO CREATIVO — GOOGLE APPS SCRIPT (v2 Robusta)
+// EUREKA ESTUDIO CREATIVO — GOOGLE APPS SCRIPT (v3 · URLSearchParams)
 // Formulario de Contacto - Landing Page
 // ===================================================
 
