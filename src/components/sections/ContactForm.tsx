@@ -92,12 +92,11 @@ export function ContactForm() {
 
             const endpoint = (import.meta as unknown as { env: Record<string, string> }).env.VITE_FORM_ENDPOINT ?? ""
             if (endpoint) {
-                // Google Apps Script no soporta CORS perfectamente — usamos no-cors
-                // El send sigue funcionando aunque no podamos leer la respuesta
+                // no-cors prohíbe headers no-simples como application/json.
+                // Sin Content-Type el browser usa text/plain (simple) → no hay preflight → pasa ✅
                 await fetch(endpoint, {
                     method: "POST",
                     mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                 })
             } else {

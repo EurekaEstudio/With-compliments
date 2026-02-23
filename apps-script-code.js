@@ -4,50 +4,45 @@
 // ===================================================
 
 const CONFIG = {
-  EMAIL_DESTINO: 'info@eurekaestudiocreativo.com',      // ← Tú recibes notificaciones aquí
-  EMAIL_REMITENTE: 'info@eurekaestudiocreativo.com',      // ← El alias desde donde SE ENVÍAN los correos (debe estar en tu cuenta de Gmail como alias)
-  NOMBRE_HOJA: 'Leads Eureka',                        // ← Nombre de la hoja en Google Sheets
-  RECAPTCHA_SECRET: 'TU_SECRET_KEY_AQUI',                  // ← Secret Key de reCAPTCHA v3 (en el backend)
+  EMAIL_DESTINO: 'info@eurekaestudiocreativo.com',  // ← Tú recibes notificaciones aquí
+  NOMBRE_HOJA: 'Eureka Landing Page ads',         // ← Nombre exacto de la pestaña
+  RECAPTCHA_SECRET: '6LeLlXUsAAAAADUxHJvl33mXaMqjqxAVGz7rS-bQ',
   SPREADSHEET_ID: SpreadsheetApp.getActiveSpreadsheet().getId()
 };
 
+// ===================================================
+// FUNCIÓN PRINCIPAL
+// ===================================================
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(10000); // Evitar conflictos si varias personas envían el formulario exacto al mismo segundo
+  lock.tryLock(10000);
 
   try {
     Logger.log('--- NUEVO LEAD RECIBIDO ---');
     Logger.log('Datos raw: ' + e.postData.contents);
     const data = JSON.parse(e.postData.contents);
 
-    // 1. RECAPTCHA
+    // Bypass recaptcha si token es 'not_configured' o la clave no fue configurada
     if (data.recaptcha_token !== 'not_configured' && CONFIG.RECAPTCHA_SECRET !== 'TU_SECRET_KEY_AQUI') {
-      if (!verificarRecaptcha(data.recaptcha_token)) throw new Error('Validación reCAPTCHA falló. Eres un bot.');
+      if (!verificarRecaptcha(data.recaptcha_token)) throw new Error('reCAPTCHA inválido');
     }
 
-    // 2. GUARDAR DATOS EN SHEET
+    // Guardar datos en Sheet (obligatorio)
     guardarEnSheet(data);
 
-    // 3. EMAILS (try/catch independientes para que si uno falla, no dé error en el frontend ni bloquee al otro)
-    try {
-      enviarEmailNotificacion(data);
-    } catch (err) {
-      Logger.log("Error enviando email a Eureka: " + err.message);
-    }
+    // Emails (independientes — si uno falla no bloquea el otro)
+    try { enviarEmailNotificacion(data); } catch (err) { Logger.log("Error email Eureka: " + err.message); }
+    try { if (data.email) enviarEmailConfirmacion(data); } catch (err) { Logger.log("Error email cliente: " + err.message); }
 
-    try {
-      if (data.email && data.email.trim() !== '') {
-        enviarEmailConfirmacion(data);
-      }
-    } catch (err) {
-      Logger.log("Error enviando confirmación al cliente: " + err.message);
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Lead procesado correctamente' })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: true }))
+      .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     Logger.log('❌ ERROR FATAL: ' + error.message);
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: error.message })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
   } finally {
     lock.releaseLock();
   }
@@ -63,11 +58,10 @@ function verificarRecaptcha(token) {
       { method: 'post', payload: { secret: CONFIG.RECAPTCHA_SECRET, response: token } }
     );
     const result = JSON.parse(response.getContentText());
-    // Score >= 0.5 asegura que sea probablemente un humano (reCAPTCHA v3)
     return result.success && result.score >= 0.5;
   } catch (error) {
-    Logger.log('Error de red validando reCAPTCHA: ' + error.message);
-    return true; // En caso de fallo de red de Google, dejamos pasar para no perder leads
+    Logger.log('Error reCAPTCHA (red): ' + error.message);
+    return true; // En error de red dejamos pasar para no perder leads
   }
 }
 
@@ -82,30 +76,29 @@ function guardarEnSheet(data) {
     Logger.log('⚠️ Hoja "' + CONFIG.NOMBRE_HOJA + '" no encontrada. Usando la primera hoja.');
     sheet = ss.getSheets()[0];
   }
-
   if (!sheet) throw new Error('No se pudo acceder a ninguna hoja.');
 
-  // Si la hoja está vacía, iniciamos headers
+  // Crear headers si la hoja está vacía
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Fecha', 'Nombre', 'WhatsApp', 'Email', 'Plan Interés', 'Rubro', 'Fuente', 'reCAPTCHA Score']);
-    sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#0a0a0a').setFontColor('#22C6EA');
+    sheet.appendRow(['Fecha', 'Nombre', 'WhatsApp', 'Email', 'Plan', 'Rubro', 'Fuente']);
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#0a0a0a').setFontColor('#22C6EA');
   }
 
   sheet.appendRow([
-    Utilities.formatDate(new Date(), 'America/Santiago', 'dd/MM/yyyy HH:mm:ss'),
+    Utilities.formatDate(new Date(), 'America/Santiago', 'dd/MM/yyyy HH:mm'),
     data.nombre || '',
     data.whatsapp || '',
     data.email || 'No proporcionado',
     data.plan || 'No especificado',
     data.rubro || 'No especificado',
-    data.fuente || 'landing_formulario',
-    'Validado'
+    data.fuente || 'landing_formulario'
   ]);
-  Logger.log('✅ Datos guardados en hoja: ' + sheet.getName());
+  Logger.log('✅ Datos guardados. Hoja: ' + sheet.getName());
 }
 
 // ===================================================
 // EMAIL DE NOTIFICACIÓN (A EUREKA)
+// Usamos MailApp — más simple y no necesita alias configurado
 // ===================================================
 function enviarEmailNotificacion(data) {
   const planesMap = {
@@ -115,121 +108,118 @@ function enviarEmailNotificacion(data) {
     'orientacion': '💬 Quiere orientación gratuita'
   };
   const planNombre = planesMap[data.plan] || data.plan || 'No especificado';
-  const asunto = '⚡ Nuevo Lead - Eureka Landing: ' + (data.nombre || 'Sin nombre');
+  const waLink = 'https://wa.me/' + (data.whatsapp || '').replace(/\D/g, '');
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        body { font-family: Arial, sans-serif; background: #0a0a0a; color: #e0e0e0; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #111; border-radius: 12px; overflow: hidden; border: 1px solid #222; }
-        .header { background: linear-gradient(135deg, #0a0a0a 0%, #0d1a1f 100%); padding: 32px 30px; text-align: center; border-bottom: 1px solid #22C6EA33; }
-        .header h1 { color: #22C6EA; font-size: 22px; margin: 0 0 6px; }
-        .alert { background: #22C6EA15; border-left: 3px solid #22C6EA; padding: 14px; margin-bottom: 24px; font-size: 13px; color: #22C6EA; }
-        .field { background: #1a1a1a; padding: 14px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #2a2a2a; }
-        .label { font-size: 11px; text-transform: uppercase; color: #555; margin-bottom: 4px; }
-        .value { font-size: 15px; color: #e0e0e0; font-weight: 500; }
-        a { color: #22C6EA; text-decoration: none; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>⚡ Nuevo Lead de Landing Page</h1>
+  MailApp.sendEmail({
+    to: CONFIG.EMAIL_DESTINO,
+    subject: '⚡ Nuevo Lead Eureka: ' + (data.nombre || 'Sin nombre'),
+    htmlBody: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#111;border-radius:12px;overflow:hidden;border:1px solid #222;">
+        <div style="background:linear-gradient(135deg,#0a0a0a,#0d1a1f);padding:28px 24px;text-align:center;border-bottom:1px solid #22C6EA33;">
+          <h2 style="color:#22C6EA;margin:0;">⚡ Nuevo Lead desde la Landing</h2>
         </div>
-        <div style="padding: 30px;">
-          <div class="alert">
+        <div style="padding:24px;">
+          <div style="background:#22C6EA15;border-left:3px solid #22C6EA;padding:12px;margin-bottom:20px;font-size:13px;color:#22C6EA;">
             Contactar cuanto antes por WhatsApp
           </div>
-          <div class="field"><div class="label">👤 Nombre</div><div class="value">${data.nombre}</div></div>
-          <div class="field"><div class="label">📱 WhatsApp</div><div class="value"><a href="https://wa.me/${(data.whatsapp || '').replace(/\\D/g, '')}">${data.whatsapp}</a></div></div>
-          <div class="field"><div class="label">📧 Email</div><div class="value">${data.email || '—'}</div></div>
-          <div class="field"><div class="label">🎯 Plan</div><div class="value" style="color:#22C6EA;font-weight:bold;">${planNombre}</div></div>
-          <div class="field"><div class="label">🏢 Rubro</div><div class="value">${data.rubro}</div></div>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:10px;background:#1a1a1a;border-radius:6px;margin-bottom:8px;">
+              <div style="font-size:11px;color:#555;text-transform:uppercase;">👤 Nombre</div>
+              <div style="font-size:15px;color:#e0e0e0;">${data.nombre || '—'}</div>
+            </td></tr>
+            <tr><td style="padding:8px 0;"></td></tr>
+            <tr><td style="padding:10px;background:#1a1a1a;border-radius:6px;">
+              <div style="font-size:11px;color:#555;text-transform:uppercase;">📱 WhatsApp</div>
+              <div style="font-size:15px;"><a href="${waLink}" style="color:#22C6EA;">${data.whatsapp || '—'}</a></div>
+            </td></tr>
+            <tr><td style="padding:8px 0;"></td></tr>
+            <tr><td style="padding:10px;background:#1a1a1a;border-radius:6px;">
+              <div style="font-size:11px;color:#555;text-transform:uppercase;">📧 Email</div>
+              <div style="font-size:15px;color:#e0e0e0;">${data.email || '—'}</div>
+            </td></tr>
+            <tr><td style="padding:8px 0;"></td></tr>
+            <tr><td style="padding:10px;background:#1a1a1a;border-radius:6px;">
+              <div style="font-size:11px;color:#555;text-transform:uppercase;">🎯 Plan de Interés</div>
+              <div style="font-size:15px;color:#22C6EA;font-weight:bold;">${planNombre}</div>
+            </td></tr>
+            <tr><td style="padding:8px 0;"></td></tr>
+            <tr><td style="padding:10px;background:#1a1a1a;border-radius:6px;">
+              <div style="font-size:11px;color:#555;text-transform:uppercase;">🏢 Rubro</div>
+              <div style="font-size:15px;color:#e0e0e0;">${data.rubro || '—'}</div>
+            </td></tr>
+          </table>
+        </div>
+        <div style="text-align:center;padding:16px;color:#333;font-size:11px;border-top:1px solid #1a1a1a;">
+          © ${new Date().getFullYear()} Eureka Estudio Creativo · landing.eurekaestudiocreativo.com
         </div>
       </div>
-    </body>
-    </html>
-  `;
-
-  // USAMOS GMAILAPP Y EL ALIAS (CONFIG.EMAIL_REMITENTE)
-  GmailApp.sendEmail(CONFIG.EMAIL_DESTINO, asunto, "", {
-    from: CONFIG.EMAIL_REMITENTE,
-    htmlBody: html,
-    name: "Sistema Eureka"
+    `
   });
-  Logger.log('✅ Email notificación enviado a Eureka.');
+  Logger.log('✅ Email de notificación enviado.');
 }
 
 // ===================================================
 // EMAIL DE CONFIRMACIÓN (AL PROSPECTO)
 // ===================================================
 function enviarEmailConfirmacion(data) {
+  if (!data.email) return;
   const planesMap = {
     'base': 'Smart Landing Base ($249.990 CLP)',
     'agente': 'Pack Agente IA ($499.990 CLP)',
     'growth': 'Ecosistema Growth ($999.990 CLP)',
     'orientacion': 'Auditoría Gratuita'
   };
-  const planNombre = planesMap[data.plan] || data.plan || 'nuestros servicios';
-  const asunto = '✅ Recibimos tu consulta, ' + (data.nombre || '') + ' — Eureka Estudio Creativo';
+  const planNombre = planesMap[data.plan] || 'nuestros servicios';
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f5; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e4e4e7; }
-        .header { background: linear-gradient(135deg, #000000 0%, #0a1014 100%); padding: 36px 30px; text-align: center; }
-        .header h1 { color: #22C6EA; font-size: 22px; margin: 0; }
-        .body { padding: 36px 30px; color: #333; line-height: 1.6; }
-        .box { background: #f8f8f8; border-radius: 10px; padding: 20px; margin: 24px 0; border-left: 3px solid #22C6EA; }
-        .cta { text-align: center; margin: 30px 0; }
-        .cta a { background: #22C6EA; color: #000; font-weight: bold; padding: 14px 32px; border-radius: 50px; text-decoration: none; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <!-- Logo Opcional si tienes uno alojado en web pública -->
-          <h1>Eureka Estudio Creativo</h1>
-        </div>
-        <div class="body">
-          <p>Hola <strong>${data.nombre}</strong>,</p>
-          <p>Gracias por contactarnos. Ya tenemos tu consulta registrada y el equipo de Eureka te escribirá por WhatsApp a la brevedad.</p>
-
-          <div class="box">
-            <p style="margin:0 0 8px; font-size:12px; color:#666; text-transform:uppercase;">Tus datos de contacto:</p>
-            <p style="margin:0 0 5px;"><strong>Plan:</strong> ${planNombre}</p>
-            <p style="margin:0;"><strong>WhatsApp:</strong> ${data.whatsapp}</p>
+  MailApp.sendEmail({
+    to: data.email,
+    subject: '✅ Recibimos tu consulta, ' + (data.nombre || '') + ' — Eureka Estudio Creativo',
+    htmlBody: `
+      <div style="font-family:Arial,sans-serif;background:#f4f4f5;margin:0;padding:20px;">
+        <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7;">
+          <div style="background:linear-gradient(135deg,#000,#0a1014);padding:32px 24px;text-align:center;">
+            <h2 style="color:#22C6EA;margin:0;font-size:20px;">Eureka Estudio Creativo</h2>
           </div>
-
-          <p>Si tienes alguna duda urgente, escríbenos directo:</p>
-
-          <div class="cta">
-            <a href="https://wa.me/56972865954?text=Hola%20Eureka%2C%20acabo%20de%20llenar%20el%20formulario%20y%20quería%20consultar">
-              Escribir por WhatsApp
-            </a>
+          <div style="padding:32px 24px;color:#333;line-height:1.6;">
+            <p>Hola <strong>${data.nombre || 'allí'}</strong>,</p>
+            <p>¡Ya tenemos tu consulta registrada! El equipo de Eureka te escribirá por WhatsApp a la brevedad con toda la información sobre el <strong>${planNombre}</strong>.</p>
+            <div style="background:#f8f8f8;border-radius:10px;padding:20px;margin:24px 0;border-left:3px solid #22C6EA;">
+              <p style="margin:0 0 6px;font-size:12px;color:#666;text-transform:uppercase;">Tu solicitud</p>
+              <p style="margin:0 0 4px;"><strong>Plan:</strong> ${planNombre}</p>
+              <p style="margin:0;"><strong>WhatsApp:</strong> ${data.whatsapp || '—'}</p>
+            </div>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="https://wa.me/56972865954?text=Hola%20Eureka%2C%20acabo%20de%20llenar%20el%20formulario"
+                 style="background:#22C6EA;color:#000;font-weight:bold;padding:14px 32px;border-radius:50px;text-decoration:none;display:inline-block;">
+                Escribir por WhatsApp
+              </a>
+            </div>
+            <p style="font-size:12px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:16px;margin:0;">
+              © ${new Date().getFullYear()} Eureka Estudio Creativo · Este correo fue generado automáticamente.
+            </p>
           </div>
-          
-          <p style="font-size:12px; color:#999; text-align:center; border-top: 1px solid #eee; padding-top: 20px;">
-            © ${new Date().getFullYear()} Eureka Estudio Creativo · Este es un correo automático.
-          </p>
         </div>
       </div>
-    </body>
-    </html>
-  `;
-
-  // USAMOS GMAILAPP Y EL ALIAS (CONFIG.EMAIL_REMITENTE)
-  GmailApp.sendEmail(data.email, asunto, "", {
-    from: CONFIG.EMAIL_REMITENTE,
-    htmlBody: html,
-    name: "Eureka Estudio Creativo"
+    `
   });
-  Logger.log('✅ Email de confirmación enviado a cliente.');
+  Logger.log('✅ Email de confirmación enviado a: ' + data.email);
+}
+
+// ===================================================
+// FUNCIÓN DE TEST (ejecutar manualmente)
+// ===================================================
+function testScript() {
+  const datosTest = {
+    nombre: 'Test Usuario',
+    whatsapp: '+56 9 9999 9999',
+    email: 'test@ejemplo.com',
+    plan: 'agente',
+    rubro: 'Clínica / Salud',
+    fuente: 'test_manual',
+    recaptcha_token: 'not_configured'
+  };
+  guardarEnSheet(datosTest);
+  enviarEmailNotificacion(datosTest);
+  enviarEmailConfirmacion(datosTest);
+  Logger.log('✅ Test completado. Revisa tu Sheet y bandeja de correo.');
 }
