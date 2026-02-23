@@ -67,16 +67,18 @@ export function ContactForm() {
         setFormState("submitting")
 
         try {
-            if (!executeRecaptcha) {
-                console.warn("ReCAPTCHA not ready")
-                setFormState("error")
-                return
+            // Intentar obtener token de reCAPTCHA; si no está listo usar fallback
+            // (pasa cuando la VITE_RECAPTCHA_SITE_KEY no está configurada en el servidor)
+            let recaptchaToken = "not_configured"
+            if (executeRecaptcha) {
+                try {
+                    recaptchaToken = await executeRecaptcha("contact_form")
+                } catch {
+                    console.warn("[ContactForm] reCAPTCHA falló, continuando sin token")
+                }
             }
 
-            // Execute captcha before sending
-            const token = await executeRecaptcha("contact_form")
-
-            // Payload ready for Google Apps Script
+            // Payload listo para Google Apps Script
             const payload = {
                 nombre: name.trim(),
                 whatsapp: phone.trim(),
@@ -84,25 +86,28 @@ export function ContactForm() {
                 plan: selectedPlan,
                 rubro: industry || "No especificado",
                 fuente: "landing_formulario",
-                recaptcha_token: token,
+                recaptcha_token: recaptchaToken,
                 timestamp: new Date().toISOString(),
             }
 
-            // Replace the URL below with your Apps Script endpoint
             const endpoint = (import.meta as unknown as { env: Record<string, string> }).env.VITE_FORM_ENDPOINT ?? ""
             if (endpoint) {
+                // Google Apps Script no soporta CORS perfectamente — usamos no-cors
+                // El send sigue funcionando aunque no podamos leer la respuesta
                 await fetch(endpoint, {
                     method: "POST",
+                    mode: "no-cors",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                 })
             } else {
-                // Dev fallback: log payload and simulate delay
-                console.info("[ContactForm] Payload:", payload)
+                // Dev fallback: log payload y simular delay
+                console.info("[ContactForm] Payload (dev):", payload)
                 await new Promise((r) => setTimeout(r, 1200))
             }
             setFormState("success")
-        } catch {
+        } catch (err) {
+            console.error("[ContactForm] Error al enviar:", err)
             setFormState("error")
         }
     }
