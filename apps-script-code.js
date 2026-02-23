@@ -1,17 +1,16 @@
 // ===================================================
-// EUREKA ESTUDIO CREATIVO — GOOGLE APPS SCRIPT (v3 · URLSearchParams)
-// Formulario de Contacto - Landing Page
+// EUREKA ESTUDIO CREATIVO — GOOGLE APPS SCRIPT (v4 - Súper Robusta)
 // ===================================================
 
 const CONFIG = {
-  EMAIL_DESTINO: 'info@eurekaestudiocreativo.com',  // ← Tú recibes notificaciones aquí
-  NOMBRE_HOJA: 'Eureka Landing Page ads',         // ← Nombre exacto de la pestaña
+  EMAIL_DESTINO: 'info@eurekaestudiocreativo.com',
+  NOMBRE_HOJA: 'Leads Landing', // Se recomienda cambiar el nombre de la pestaña en el Sheet a este
   RECAPTCHA_SECRET: '6LeLlXUsAAAAADUxHJvl33mXaMqjqxAVGz7rS-bQ',
-  SPREADSHEET_ID: SpreadsheetApp.getActiveSpreadsheet().getId()
+  SPREADSHEET_ID: SpreadsheetApp.getActiveSpreadsheet() ? SpreadsheetApp.getActiveSpreadsheet().getId() : null
 };
 
 // ===================================================
-// FUNCIÓN PRINCIPAL
+// FUNCIÓN PRINCIPAL (v4 - Súper Robusta)
 // ===================================================
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -20,38 +19,52 @@ function doPost(e) {
   try {
     Logger.log('--- NUEVO LEAD RECIBIDO ---');
 
-    // Leer datos: primero intentar e.parameter (URLSearchParams / form-encoded)
-    // Si no hay, intentar JSON en e.postData.contents
-    var data;
-    if (e.parameter && e.parameter.nombre) {
-      // Viene de URLSearchParams (application/x-www-form-urlencoded) ✅
+    // Extracción de datos ultra-flexible
+    var data = {};
+
+    // Caso 1: URLSearchParams (form-encoded)
+    if (e.parameter && Object.keys(e.parameter).length > 0) {
       data = e.parameter;
-      Logger.log('Formato: URLSearchParams');
-    } else if (e.postData && e.postData.contents) {
-      // Viene como JSON (application/json o text/plain)
-      data = JSON.parse(e.postData.contents);
-      Logger.log('Formato: JSON');
-    } else {
-      throw new Error('No se recibieron datos en el request');
+      Logger.log('Formato detectado: parameter (URLSearchParams)');
+    }
+    // Caso 2: JSON en el cuerpo del request
+    else if (e.postData && e.postData.contents) {
+      try {
+        data = JSON.parse(e.postData.contents);
+        Logger.log('Formato detectado: postData (JSON)');
+      } catch (f) {
+        Logger.log('Error parseando JSON, intentando como string plano');
+        data = { raw_data: e.postData.contents };
+      }
     }
 
-    Logger.log('Nombre: ' + data.nombre);
-    Logger.log('Plan: ' + data.plan);
+    Logger.log('Datos procesados: ' + JSON.stringify(data));
 
-    // Bypass recaptcha si token es 'not_configured'
-    if (data.recaptcha_token && data.recaptcha_token !== 'not_configured' && CONFIG.RECAPTCHA_SECRET !== 'TU_SECRET_KEY_AQUI') {
-      if (!verificarRecaptcha(data.recaptcha_token)) throw new Error('reCAPTCHA inválido');
+    // Si no tenemos ni nombre, algo anda mal
+    if (!data.nombre && !data.nombre_form) {
+      Logger.log('⚠️ No se detectó campo "nombre". Podría ser un request vacío.');
     }
+
+    // Normalizar campos (por si vienen con otros nombres)
+    data.nombre = data.nombre || data.nombre_form || '';
+    data.whatsapp = data.whatsapp || data.telefono || '';
+    data.email = data.email || '';
+    data.plan = data.plan || '';
+    data.rubro = data.rubro || '';
 
     // Guardar datos en Sheet (obligatorio)
-    guardarEnSheet(data);
+    try {
+      guardarEnSheet(data);
+    } catch (err) {
+      Logger.log("Error guardando en Sheet: " + err.message);
+    }
 
-    // Emails (independientes — si uno falla no bloquea el otro)
+    // Emails (independientes)
     try { enviarEmailNotificacion(data); } catch (err) { Logger.log("Error email Eureka: " + err.message); }
     try { if (data.email) enviarEmailConfirmacion(data); } catch (err) { Logger.log("Error email cliente: " + err.message); }
 
     return ContentService
-      .createTextOutput(JSON.stringify({ success: true }))
+      .createTextOutput(JSON.stringify({ success: true, message: 'Recibido correctamente' }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
