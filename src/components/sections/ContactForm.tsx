@@ -92,13 +92,15 @@ export function ContactForm() {
 
             const endpoint = (import.meta as unknown as { env: Record<string, string> }).env.VITE_FORM_ENDPOINT ?? ""
             if (endpoint) {
-                // no-cors prohíbe headers no-simples como application/json.
-                // Sin Content-Type el browser usa text/plain (simple) → no hay preflight → pasa ✅
+                // Configuración IDÉNTICA al sitio funcional (ortodoncia-script.js)
                 await fetch(endpoint, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify(payload),
-                })
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
             } else {
                 // Dev fallback: log payload y simular delay
                 console.info("[ContactForm] Payload (dev):", payload)
