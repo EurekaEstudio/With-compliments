@@ -103,6 +103,17 @@ export function ContactForm() {
                 mode: "no-cors",
                 body: params,
             })
+
+            // Meta/GTM Tracking
+            const w = window as any
+            if (w.dataLayer) {
+                w.dataLayer.push({
+                    event: "form_submission",
+                    form_name: "contact_landing",
+                    plan: selectedPlan
+                })
+            }
+
             setFormState("success")
         } catch (err) {
             console.error("[ContactForm] Error al enviar:", err)
