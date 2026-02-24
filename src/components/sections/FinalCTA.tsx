@@ -22,10 +22,7 @@ export function FinalCTA() {
               </p>
               <button
                 onClick={() => {
-                  const formElement = document.getElementById('contacto')
-                  if (formElement) {
-                    formElement.scrollIntoView({ behavior: 'smooth' })
-                  }
+                  window.location.href = '#contacto'
                 }}
                 className="inline-flex items-center gap-2.5 px-6 py-3 bg-primary text-primary-foreground font-semibold text-sm rounded-xl hover:scale-105 hover:glow-cyan-strong transition-all duration-300 group mb-10"
               >

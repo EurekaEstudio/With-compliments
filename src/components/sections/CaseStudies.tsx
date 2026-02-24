@@ -123,10 +123,7 @@ export function CaseStudies() {
                     <button
                         onClick={() => {
                             trackCTAClick("case_studies")
-                            const formElement = document.getElementById('contacto')
-                            if (formElement) {
-                                formElement.scrollIntoView({ behavior: 'smooth' })
-                            }
+                            window.location.href = '#contacto'
                         }}
                         className="inline-flex items-center gap-2.5 px-8 py-4 bg-primary text-primary-foreground font-semibold text-base rounded-xl hover:scale-105 hover:glow-cyan-strong transition-all duration-300 group"
                         aria-label="Ver cómo podemos ayudarte - Ir al formulario"
