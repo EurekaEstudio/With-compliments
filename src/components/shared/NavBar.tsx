@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { BRAND } from "@/lib/constants"
 import { trackCTAClick } from "@/lib/tracking"
-import { openChatWithIntent } from "@/hooks/use-chat-widget"
+
 
 const NAV_LINKS = [
   { label: "Qué Hacemos", href: "#infraestructura" },
@@ -28,8 +28,8 @@ export function NavBar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
-          ? "translate-y-0 opacity-100 bg-black/80 backdrop-blur-xl border-b border-white/5"
-          : "-translate-y-full opacity-0"
+        ? "translate-y-0 opacity-100 bg-black/80 backdrop-blur-xl border-b border-white/5"
+        : "-translate-y-full opacity-0"
         }`}
       style={{ pointerEvents: scrolled ? "auto" : "none" }}
     >
