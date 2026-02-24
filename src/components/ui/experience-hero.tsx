@@ -10,6 +10,10 @@ import { trackCTAClick } from "@/lib/tracking"
 import { openChatWithIntent } from "@/hooks/use-chat-widget"
 import { GooeyText } from "./gooey-text-morphing"
 
+// Detect touch/mobile devices only once at module level for performance
+const isMobileDevice = typeof window !== 'undefined'
+  && window.matchMedia("(hover: none) and (pointer: coarse)").matches
+
 /* ============================================
    3D SCENE COMPONENTS
    ============================================ */
@@ -129,31 +133,32 @@ export function ExperienceHero() {
         delay: 0.3,
       })
 
-
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!ctaRef.current) return
-        const rect = ctaRef.current.getBoundingClientRect()
-        const cx = rect.left + rect.width / 2
-        const cy = rect.top + rect.height / 2
-        const dist = Math.hypot(e.clientX - cx, e.clientY - cy)
-        if (dist < 150) {
-          gsap.to(ctaRef.current, {
-            x: (e.clientX - cx) * 0.35,
-            y: (e.clientY - cy) * 0.35,
-            duration: 0.6,
-          })
-        } else {
-          gsap.to(ctaRef.current, {
-            x: 0,
-            y: 0,
-            duration: 0.8,
-            ease: "elastic.out(1, 0.3)",
-          })
+      // Only add magnetic mouse effect on desktop
+      if (!isMobileDevice) {
+        const handleMouseMove = (e: MouseEvent) => {
+          if (!ctaRef.current) return
+          const rect = ctaRef.current.getBoundingClientRect()
+          const cx = rect.left + rect.width / 2
+          const cy = rect.top + rect.height / 2
+          const dist = Math.hypot(e.clientX - cx, e.clientY - cy)
+          if (dist < 150) {
+            gsap.to(ctaRef.current, {
+              x: (e.clientX - cx) * 0.35,
+              y: (e.clientY - cy) * 0.35,
+              duration: 0.6,
+            })
+          } else {
+            gsap.to(ctaRef.current, {
+              x: 0,
+              y: 0,
+              duration: 0.8,
+              ease: "elastic.out(1, 0.3)",
+            })
+          }
         }
+        window.addEventListener("mousemove", handleMouseMove)
+        return () => window.removeEventListener("mousemove", handleMouseMove)
       }
-      window.addEventListener("mousemove", handleMouseMove)
-      return () => window.removeEventListener("mousemove", handleMouseMove)
     }, containerRef)
     return () => ctx.revert()
   }, [])
@@ -164,19 +169,29 @@ export function ExperienceHero() {
       id="hero"
       className="relative min-h-screen w-full bg-[#020202] flex flex-col selection:bg-primary selection:text-primary-foreground overflow-hidden"
     >
-      {/* 3D Canvas Background */}
+      {/* 3D Canvas Background — Desktop only. Mobile gets a CSS gradient to prevent overheating */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <Canvas
-          camera={{ position: [0, 0, 60], fov: 35 }}
-          dpr={(typeof window !== 'undefined' && window.matchMedia("(hover: none) and (pointer: coarse)").matches) ? 1 : [1, 1.5]}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-          frameloop={(typeof window !== 'undefined' && window.matchMedia("(hover: none) and (pointer: coarse)").matches) ? "demand" : "always"}
-        >
-          <ambientLight intensity={0.4} />
-          <spotLight position={[50, 50, 50]} intensity={3} />
-          <LiquidBackground />
-          <Monolith />
-        </Canvas>
+        {isMobileDevice ? (
+          // Pure CSS background for mobile — identical look, zero GPU load
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              background: 'radial-gradient(ellipse 80% 60% at 60% 40%, #061820 0%, #020202 70%)',
+            }}
+          />
+        ) : (
+          <Canvas
+            camera={{ position: [0, 0, 60], fov: 35 }}
+            dpr={[1, 1.5]}
+            gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          >
+            <ambientLight intensity={0.4} />
+            <spotLight position={[50, 50, 50]} intensity={3} />
+            <LiquidBackground />
+            <Monolith />
+          </Canvas>
+        )}
       </div>
 
       {/* 2D Overlay */}
