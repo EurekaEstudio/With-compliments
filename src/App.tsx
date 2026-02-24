@@ -19,6 +19,11 @@ import { NavBar } from "@/components/shared/NavBar"
 
 gsap.registerPlugin(ScrollTrigger)
 
+// Prevent jumping/stuck scroll on mobile when toolbar appears/disappears
+if (typeof window !== 'undefined') {
+  ScrollTrigger.config({ ignoreMobileResize: true })
+}
+
 // Lazy load the heavy 3D hero (~600KB three.js bundle)
 const ExperienceHero = lazy(
   () => import("@/components/ui/experience-hero"),

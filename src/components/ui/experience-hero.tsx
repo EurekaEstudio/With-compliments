@@ -168,8 +168,9 @@ export function ExperienceHero() {
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <Canvas
           camera={{ position: [0, 0, 60], fov: 35 }}
-          dpr={[1, 1.5]}
+          dpr={(typeof window !== 'undefined' && window.matchMedia("(hover: none) and (pointer: coarse)").matches) ? 1 : [1, 1.5]}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          frameloop={(typeof window !== 'undefined' && window.matchMedia("(hover: none) and (pointer: coarse)").matches) ? "demand" : "always"}
         >
           <ambientLight intensity={0.4} />
           <spotLight position={[50, 50, 50]} intensity={3} />

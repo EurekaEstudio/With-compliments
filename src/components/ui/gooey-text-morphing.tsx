@@ -125,7 +125,11 @@ export function GooeyText({
 
             <div
                 className="absolute inset-0 flex items-center"
-                style={{ filter: "url(#threshold)" }}
+                style={{
+                    filter: (typeof window !== 'undefined' && window.matchMedia("(hover: none) and (pointer: coarse)").matches)
+                        ? "none"
+                        : "url(#threshold)"
+                }}
             >
                 <span
                     ref={text1Ref}
