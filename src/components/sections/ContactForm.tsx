@@ -1,9 +1,12 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { User, Phone, Mail, Building2, Send, CheckCircle2, Loader2 } from "lucide-react"
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3"
+import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3"
 import { SectionWrapper } from "@/components/shared/SectionWrapper"
 import { COPY } from "@/lib/constants"
+
+const RECAPTCHA_KEY = (import.meta as unknown as { env: Record<string, string> }).env.VITE_RECAPTCHA_SITE_KEY || "6LeLlXUsAAAAAA3NpMuCUTk7-U01A0UBodfQXmqP"
+
 
 const PLANS = [
     {
@@ -49,7 +52,8 @@ const INDUSTRIES = [
 
 type FormState = "idle" | "submitting" | "success" | "error"
 
-export function ContactForm() {
+// ContactFormInner necesita estar dentro del Provider para usar el hook
+function ContactFormInner() {
     const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
     const [name, setName] = useState("")
     const [phone, setPhone] = useState("")
@@ -355,5 +359,26 @@ export function ContactForm() {
                 )}
             </AnimatePresence>
         </SectionWrapper>
+    )
+}
+
+/**
+ * ContactForm — export público.
+ * Envüelve el formulario con GoogleReCaptchaProvider para que el script
+ * de reCAPTCHA (~358KB, 1s CPU) solo se cargue cuando el usuario llega
+ * al formulario, no en la carga inicial de la página.
+ */
+export function ContactForm() {
+    return (
+        <GoogleReCaptchaProvider
+            reCaptchaKey={RECAPTCHA_KEY}
+            container={{
+                parameters: {
+                    badge: "bottomleft",
+                },
+            }}
+        >
+            <ContactFormInner />
+        </GoogleReCaptchaProvider>
     )
 }
