@@ -109,11 +109,21 @@ export function ExperienceHero() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        revealRef.current,
-        { filter: "blur(30px)", opacity: 0, scale: 1.02 },
-        { filter: "blur(0px)", opacity: 1, scale: 1, duration: 2.2, ease: "expo.out" },
-      )
+      if (isMobileDevice) {
+        // Mobile: GPU-composited animation only — no filter blur (causes repaint)
+        gsap.fromTo(
+          revealRef.current,
+          { opacity: 0, y: 16 },
+          { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" },
+        )
+      } else {
+        // Desktop: premium blur reveal
+        gsap.fromTo(
+          revealRef.current,
+          { filter: "blur(30px)", opacity: 0, scale: 1.02 },
+          { filter: "blur(0px)", opacity: 1, scale: 1, duration: 2.2, ease: "expo.out" },
+        )
+      }
 
       gsap.from(".hero-card", {
         x: 60,

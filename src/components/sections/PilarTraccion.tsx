@@ -4,6 +4,11 @@ import { Target, Filter, RefreshCw, BarChart3 } from "lucide-react"
 import { SectionWrapper } from "@/components/shared/SectionWrapper"
 import { COPY } from "@/lib/constants"
 
+// Skip animations on touch devices to save CPU/battery
+const isTouchDevice =
+  typeof window !== "undefined" &&
+  window.matchMedia("(hover: none) and (pointer: coarse)").matches
+
 const segmentIcons = [Target, Filter, RefreshCw, BarChart3]
 
 export function PilarTraccion() {
@@ -52,9 +57,9 @@ export function PilarTraccion() {
               return (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0.3 }}
+                  initial={isTouchDevice ? false : { opacity: 0.3 }}
                   whileInView={{ opacity: 1 }}
-                  viewport={{ once: false, margin: "-20% 0px -40% 0px" }}
+                  viewport={{ once: true, margin: "-20% 0px -40% 0px" }}
                   transition={{ duration: 0.5 }}
                   className="relative pl-20 md:pl-28 flex flex-col group"
                 >
@@ -62,7 +67,7 @@ export function PilarTraccion() {
                   <motion.div
                     className="absolute left-[20px] md:left-[28px] top-2 -translate-x-1/2 w-4 h-4 rounded-full bg-black border-[3px] border-white/20 transition-all duration-500 z-10"
                     whileInView={{ backgroundColor: "#22c6ea", borderColor: "#22c6ea", scale: 1.5, boxShadow: "0 0 20px rgba(34, 198, 234, 0.5)" }}
-                    viewport={{ once: false, margin: "-20% 0px -40% 0px" }}
+                    viewport={{ once: true, margin: "-20% 0px -40% 0px" }}
                   />
 
                   {/* Icon & Number Badge */}

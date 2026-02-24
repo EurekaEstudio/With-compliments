@@ -266,3 +266,28 @@
 .grecaptcha-badge:hover {
   width: 256px !important;
 }
+
+/* ============================================
+   PREFERS-REDUCED-MOTION
+   Detener todas las animaciones continuas para
+   usuarios con sensibilidad al movimiento.
+   WCAG 2.1 AA — Motion-triggered animation
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .logo-cloud-track {
+    animation: none !important;
+  }
+
+  @keyframes loading-slide {
+
+    0%,
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  /* Stop CSS transitions that might feel distracting */
+  .grecaptcha-badge {
+    transition: none !important;
+  }
+}
