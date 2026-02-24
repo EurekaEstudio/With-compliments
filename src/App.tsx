@@ -75,17 +75,25 @@ export default function App() {
   const scrollDepthsTracked = useRef(new Set<number>())
 
   useEffect(() => {
-    // Initialize Lenis smooth scroll
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    })
+    // On mobile/touch devices, native scroll is smoother than Lenis
+    // because Three.js blocks the main thread during loading
+    const isTouchDevice = () => window.matchMedia("(hover: none) and (pointer: coarse)").matches
 
-    // Connect Lenis to GSAP ScrollTrigger
-    lenis.on("scroll", ScrollTrigger.update)
-    gsap.ticker.add((time) => lenis.raf(time * 1000))
-    gsap.ticker.lagSmoothing(0)
+    let lenis: InstanceType<typeof Lenis> | null = null
+
+    if (!isTouchDevice()) {
+      // Initialize Lenis smooth scroll only on desktop
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+      })
+
+      // Connect Lenis to GSAP ScrollTrigger
+      lenis.on("scroll", ScrollTrigger.update)
+      gsap.ticker.add((time) => lenis!.raf(time * 1000))
+      gsap.ticker.lagSmoothing(0)
+    }
 
     // Scroll depth tracking
     const thresholds = [25, 50, 75, 100]
@@ -106,7 +114,7 @@ export default function App() {
     window.addEventListener("scroll", onScroll, { passive: true })
 
     return () => {
-      lenis.destroy()
+      lenis?.destroy()
       window.removeEventListener("scroll", onScroll)
     }
   }, [])
