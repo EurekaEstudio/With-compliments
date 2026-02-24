@@ -27,11 +27,10 @@ export function NavBar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled
           ? "translate-y-0 opacity-100 bg-black/80 backdrop-blur-xl border-b border-white/5"
           : "-translate-y-full opacity-0"
-      }`}
+        }`}
       style={{ pointerEvents: scrolled ? "auto" : "none" }}
     >
       <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between h-16">
@@ -61,7 +60,7 @@ export function NavBar() {
         <button
           onClick={() => {
             trackCTAClick("nav_cta")
-            openChatWithIntent('{"intent":"cotizar","source":"nav_cta"}')
+            scrollTo("#formulario")
           }}
           className="hidden md:inline-flex text-sm font-semibold bg-primary text-primary-foreground px-5 py-2 rounded-lg hover:bg-primary/90 transition-colors"
         >
@@ -86,9 +85,8 @@ export function NavBar() {
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ${
-          mobileOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
-        } bg-black/95 backdrop-blur-xl border-t border-white/5`}
+        className={`md:hidden overflow-hidden transition-all duration-300 ${mobileOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
+          } bg-black/95 backdrop-blur-xl border-t border-white/5`}
       >
         <div className="px-6 py-4 flex flex-col gap-1">
           {NAV_LINKS.map((link) => (
@@ -103,8 +101,7 @@ export function NavBar() {
           <button
             onClick={() => {
               trackCTAClick("nav_cta_mobile")
-              openChatWithIntent('{"intent":"cotizar","source":"nav_cta_mobile"}')
-              setMobileOpen(false)
+              scrollTo("#formulario")
             }}
             className="text-sm font-semibold bg-primary text-primary-foreground px-5 py-3 rounded-lg w-full mt-2"
           >
