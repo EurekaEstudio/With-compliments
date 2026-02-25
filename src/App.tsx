@@ -47,11 +47,16 @@ function HeroFallback() {
           {/* Headline - EXACT match to loaded hero */}
           <div className="max-w-3xl md:max-w-4xl lg:max-w-4xl xl:max-w-3xl pr-0 md:pr-8 mt-16 md:mt-20">
             <h1 className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold leading-[1.2] tracking-tight text-white">
-              Diseñamos tu próxima página web.
+              {COPY.hero.title}
             </h1>
             <div className="flex flex-wrap items-baseline gap-x-[0.45em] mt-1">
               <span className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold leading-[1.2] tracking-tight text-white whitespace-nowrap">Una que</span>
-              <span className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold text-primary whitespace-nowrap leading-[1.2] opacity-0">cierra clientes</span>
+              <div className="relative inline-block align-baseline">
+                {/* Placeholder for longest text to prevent CLS */}
+                <span className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold text-primary whitespace-nowrap leading-[1.2] opacity-0 pointer-events-none" aria-hidden="true">
+                  {COPY.hero.morphingTexts.reduce((a, b) => (a.length >= b.length ? a : b))}
+                </span>
+              </div>
             </div>
             <p className="mt-8 md:mt-10 text-sm md:text-base text-white/50 max-w-lg leading-relaxed font-light">
               {COPY.hero.subtitle}

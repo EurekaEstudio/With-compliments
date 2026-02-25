@@ -226,12 +226,12 @@ export function ExperienceHero() {
           {/* Headline */}
           <div className="max-w-3xl md:max-w-4xl lg:max-w-4xl xl:max-w-3xl pr-0 md:pr-8 mt-16 md:mt-20">
             <h1 className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold leading-[1.2] tracking-tight text-white">
-              Diseñamos tu próxima página web.
+              {COPY.hero.title}
             </h1>
             <div className="flex flex-wrap items-baseline gap-x-[0.45em] mt-1">
               <span className="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold leading-[1.2] tracking-tight text-white whitespace-nowrap">Una que</span>
               <GooeyText
-                texts={["vende sola", "trabaja 24/7", "cierra clientes", "agenda citas"]}
+                texts={[...COPY.hero.morphingTexts]}
                 morphTime={1.5}
                 cooldownTime={1.2}
                 textClassName="text-[clamp(1.35rem,3.8vw,3.25rem)] font-bold text-primary whitespace-nowrap leading-[1.2]"

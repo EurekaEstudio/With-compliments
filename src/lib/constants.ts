@@ -13,9 +13,10 @@ export const BRAND = {
 
 export const COPY = {
   hero: {
-    title: "Diseñamos tu próxima página web. Una que trabaja por ti.",
+    title: "Diseñamos tu próxima página web.",
+    morphingTexts: ["agenda citas", "vende sola", "cierra clientes", "envía correos"],
     subtitle:
-      "No es solo una página bonita. Es una landing inteligente con IA integrada que atiende, califica y agenda clientes por ti — automáticamente.",
+      "No es solo una página bonita. Es una landing inteligente con IA integrada que atiende, califica y agenda clientes por ti. Todo en automático.",
     cta: "Cotizar mi página web",
     ctaIntent: '{"intent":"cotizar","source":"hero_cta"}',
   },
