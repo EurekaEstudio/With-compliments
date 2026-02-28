@@ -1,25 +1,15 @@
 declare global {
   interface Window {
     dataLayer: Record<string, unknown>[]
-    fbq: (...args: unknown[]) => void
-    gtag: (...args: unknown[]) => void
   }
 }
 
 export function trackEvent(eventName: string, params?: Record<string, unknown>) {
-  // Google Tag Manager / GA4
+  // Google Tag Manager (GTM) es el centro de distribución.
+  // Al enviar eventos solo a dataLayer, evitamos duplicidad si GTM 
+  // ya está configurado para reenviar a Meta Pixel o Google Ads.
   if (window.dataLayer) {
     window.dataLayer.push({ event: eventName, ...params })
-  }
-
-  // Meta Pixel
-  if (typeof window.fbq === "function") {
-    window.fbq("trackCustom", eventName, params)
-  }
-
-  // Google Ads (via gtag)
-  if (typeof window.gtag === "function") {
-    window.gtag("event", eventName, params)
   }
 }
 
