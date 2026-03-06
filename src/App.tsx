@@ -143,9 +143,9 @@ export default function App() {
           <LogoCloud />
           <PilarInfraestructura />
           <VisualShowcase />
+          <ContactForm />
           <PilarInteligencia />
           <PilarTraccion />
-          <ContactForm />
           <CaseStudies />
           <ComparisonTable />
           <PricingSection />
